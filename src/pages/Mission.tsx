@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,18 +129,21 @@ const Mission = () => {
                 <div className="text-5xl mb-4">🔍✨</div>
                 <Button 
                   onClick={() => navigate('/navigation')}
-                  disabled={!canScanPortal}
-                  className={`w-full font-bold py-4 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all duration-200 ${
-                    canScanPortal 
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white' 
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-4 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all duration-200 mb-3"
                 >
-                  {canScanPortal ? '🧭 Naviguer vers le portail' : '🔒 Rapproche-toi du portail'}
+                  🧭 Naviguer vers le portail
                 </Button>
+                {canScanPortal && (
+                  <Button 
+                    onClick={() => navigate('/portal/1')}
+                    className="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-bold py-4 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all duration-200"
+                  >
+                    🔮 Scanner le portail maintenant !
+                  </Button>
+                )}
                 {!canScanPortal && (
                   <p className="text-gray-500 text-sm mt-2">
-                    Tu dois être très proche pour naviguer !
+                    Utilise la navigation pour te rapprocher !
                   </p>
                 )}
               </CardContent>
