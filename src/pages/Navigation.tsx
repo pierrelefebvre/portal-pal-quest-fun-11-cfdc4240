@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, ArrowUpLeft, ArrowDownRight, ArrowDownLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Motion } from '@capacitor/motion';
 import { Geolocation } from '@capacitor/geolocation';
@@ -11,7 +11,7 @@ const Navigation = () => {
   const navigate = useNavigate();
   const [distance, setDistance] = useState<number>(150);
   const [temperature, setTemperature] = useState<'cold' | 'warm' | 'hot'>('cold');
-  const [direction, setDirection] = useState<'north' | 'south' | 'east' | 'west'>('north');
+  const [direction, setDirection] = useState<'north' | 'northeast' | 'east' | 'southeast' | 'south' | 'southwest' | 'west' | 'northwest'>('north');
   const [compass, setCompass] = useState(0);
   const [userPosition, setUserPosition] = useState<{lat: number, lon: number} | null>(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
@@ -288,15 +288,24 @@ const Navigation = () => {
 
     console.log('Direction relative:', relativeBearing, 'compass:', compass, 'target:', targetBear);
 
-    // Convertir en direction relative à l'appareil
-    if (relativeBearing >= -45 && relativeBearing < 45) {
+    // Convertir en direction relative à l'appareil (8 directions, tous les 45°)
+    // Correction de l'inversion gauche/droite
+    if (relativeBearing >= -22.5 && relativeBearing < 22.5) {
       setDirection('north'); // Devant
-    } else if (relativeBearing >= 45 && relativeBearing < 135) {
-      setDirection('east'); // À droite
-    } else if (relativeBearing >= 135 || relativeBearing < -135) {
+    } else if (relativeBearing >= 22.5 && relativeBearing < 67.5) {
+      setDirection('northwest'); // Devant-gauche (était northeast)
+    } else if (relativeBearing >= 67.5 && relativeBearing < 112.5) {
+      setDirection('west'); // À gauche (était east)
+    } else if (relativeBearing >= 112.5 && relativeBearing < 157.5) {
+      setDirection('southwest'); // Derrière-gauche (était southeast)
+    } else if (relativeBearing >= 157.5 || relativeBearing < -157.5) {
       setDirection('south'); // Derrière
+    } else if (relativeBearing >= -157.5 && relativeBearing < -112.5) {
+      setDirection('southeast'); // Derrière-droite (était southwest)
+    } else if (relativeBearing >= -112.5 && relativeBearing < -67.5) {
+      setDirection('east'); // À droite (était west)
     } else {
-      setDirection('west'); // À gauche
+      setDirection('northeast'); // Devant-droite (était northwest)
     }
   };
 
@@ -311,18 +320,26 @@ const Navigation = () => {
   const getDirectionArrow = () => {
     switch (direction) {
       case 'north': return <ArrowUp className="h-12 w-12" />;
-      case 'south': return <ArrowDown className="h-12 w-12" />;
+      case 'northeast': return <ArrowUpRight className="h-12 w-12" />;
       case 'east': return <ArrowRight className="h-12 w-12" />;
+      case 'southeast': return <ArrowDownRight className="h-12 w-12" />;
+      case 'south': return <ArrowDown className="h-12 w-12" />;
+      case 'southwest': return <ArrowDownLeft className="h-12 w-12" />;
       case 'west': return <ArrowLeft className="h-12 w-12" />;
+      case 'northwest': return <ArrowUpLeft className="h-12 w-12" />;
     }
   };
 
   const getDirectionText = () => {
     switch (direction) {
       case 'north': return "Continue tout droit 🧭";
-      case 'south': return "Fais demi-tour 🧭";
+      case 'northeast': return "Léger virage à droite 🧭";
       case 'east': return "Tourne à droite 🧭";
+      case 'southeast': return "Tourne à droite et recule 🧭";
+      case 'south': return "Fais demi-tour 🧭";
+      case 'southwest': return "Tourne à gauche et recule 🧭";
       case 'west': return "Tourne à gauche 🧭";
+      case 'northwest': return "Léger virage à gauche 🧭";
     }
   };
 
