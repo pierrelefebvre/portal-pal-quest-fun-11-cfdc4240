@@ -28,6 +28,7 @@ const Navigation = () => {
     { id: 3, name: "Église Saint-Martin", lat: 50.67801, lon: 3.15298 },
     { id: 4, name: "Mairie de Croix", lat: 50.67502, lon: 3.15001 },
     { id: 5, name: "Stade Amédée Prouvost", lat: 50.68001, lon: 3.15798 },
+    { id: 6, name: "Decathlon", lat: 50.67289594117399, lon: 3.148318881734259 }
   ];
 
   // Déterminer le portail cible basé sur l'URL
