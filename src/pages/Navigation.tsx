@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,7 @@ const Navigation = () => {
   const [compass, setCompass] = useState(0);
   const [userPosition, setUserPosition] = useState<{lat: number, lon: number} | null>(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Position fixe du portail (exemple: bibliothèque)
   const targetPosition = { lat: 48.8566, lon: 2.3522 }; // Coordonnées d'exemple (Paris)
@@ -34,9 +36,7 @@ const Navigation = () => {
       if (permissions.location !== 'granted') {
         const request = await Geolocation.requestPermissions();
         if (request.location !== 'granted') {
-          console.log('Permissions de géolocalisation refusées');
-          // Utiliser la simulation en fallback
-          startSimulation();
+          setError('Permissions de géolocalisation requises pour utiliser la navigation');
           return;
         }
       }
@@ -44,15 +44,14 @@ const Navigation = () => {
       setPermissionGranted(true);
       
       // Démarrer la géolocalisation
-      startGeolocation();
+      await startGeolocation();
       
       // Démarrer le gyroscope/boussole
-      startCompass();
+      await startCompass();
       
     } catch (error) {
       console.error('Erreur lors de l\'initialisation des capteurs:', error);
-      // Utiliser la simulation en fallback
-      startSimulation();
+      setError('Impossible d\'accéder aux capteurs du dispositif');
     }
   };
 
@@ -86,7 +85,7 @@ const Navigation = () => {
 
     } catch (error) {
       console.error('Erreur de géolocalisation:', error);
-      startSimulation();
+      setError('Impossible d\'accéder à la géolocalisation');
     }
   };
 
@@ -101,11 +100,7 @@ const Navigation = () => {
       });
     } catch (error) {
       console.error('Erreur du gyroscope:', error);
-      // Animation de fallback
-      const interval = setInterval(() => {
-        setCompass(prev => (prev + 1) % 360);
-      }, 100);
-      return () => clearInterval(interval);
+      setError('Impossible d\'accéder au gyroscope');
     }
   };
 
@@ -143,25 +138,6 @@ const Navigation = () => {
     else setTemperature('cold');
   };
 
-  const startSimulation = () => {
-    // Mode simulation si les capteurs ne fonctionnent pas
-    const interval = setInterval(() => {
-      const newDistance = Math.max(10, distance - Math.random() * 30);
-      setDistance(newDistance);
-      
-      if (newDistance < 50) setTemperature('hot');
-      else if (newDistance < 100) setTemperature('warm');
-      else setTemperature('cold');
-
-      const directions = ['north', 'south', 'east', 'west'] as const;
-      setDirection(directions[Math.floor(Math.random() * directions.length)]);
-      
-      setCompass(prev => (prev + 5) % 360);
-    }, 2000);
-
-    return () => clearInterval(interval);
-  };
-
   const getTemperatureMessage = () => {
     switch (temperature) {
       case 'hot': return { text: "🔥 Tu brûles ! Tout proche !", color: "text-red-600", bg: "bg-red-100" };
@@ -188,6 +164,79 @@ const Navigation = () => {
     }
   };
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 p-4">
+        <div className="max-w-md mx-auto">
+          <div className="text-center mb-6 pt-6">
+            <div className="text-5xl mb-3">⚠️</div>
+            <h1 className="text-3xl font-bold text-red-800 mb-2">
+              Erreur
+            </h1>
+            <p className="text-red-600">{error}</p>
+          </div>
+          
+          <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-red-200">
+            <CardContent className="p-6 text-center">
+              <p className="text-red-700 mb-4">
+                Pour utiliser la navigation, vous devez activer les permissions de géolocalisation et de mouvement.
+              </p>
+              <Button 
+                onClick={initializeSensors}
+                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-4 rounded-full text-lg"
+              >
+                🔄 Réessayer
+              </Button>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Button
+              onClick={() => navigate('/mission')}
+              variant="outline"
+              className="bg-white/80 backdrop-blur-sm border-2 border-gray-300 hover:bg-gray-50 font-bold py-3 rounded-2xl"
+            >
+              ← Retour Mission
+            </Button>
+            
+            <Button
+              onClick={() => navigate('/')}
+              variant="outline"
+              className="bg-white/80 backdrop-blur-sm border-2 border-blue-300 hover:bg-blue-50 text-blue-700 font-bold py-3 rounded-2xl"
+            >
+              🏠 Accueil
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!permissionGranted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 p-4">
+        <div className="max-w-md mx-auto">
+          <div className="text-center mb-6 pt-6">
+            <div className="text-5xl mb-3">🧭✨</div>
+            <h1 className="text-3xl font-bold text-purple-800 mb-2">
+              Navigation Magique
+            </h1>
+            <p className="text-purple-600">Activation des capteurs en cours...</p>
+          </div>
+          
+          <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-purple-200">
+            <CardContent className="p-6 text-center">
+              <div className="animate-spin text-4xl mb-4">🔄</div>
+              <p className="text-purple-700">
+                Demande d'accès aux capteurs...
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 p-4">
       <div className="max-w-md mx-auto">
@@ -198,11 +247,6 @@ const Navigation = () => {
             Navigation Magique
           </h1>
           <p className="text-purple-600">Suis les flèches pour trouver le portail !</p>
-          {!permissionGranted && (
-            <p className="text-orange-600 text-sm mt-2">
-              📍 Mode simulation - Active la géolocalisation pour plus de précision
-            </p>
-          )}
         </div>
 
         {/* Boussole */}
@@ -220,7 +264,7 @@ const Navigation = () => {
               </div>
             </div>
             <p className="text-purple-800 font-bold text-lg mb-2">
-              {permissionGranted ? 'Boussole GPS' : 'Boussole Magique'}
+              Boussole GPS
             </p>
             <p className="text-purple-600">Orientation : {compass}°</p>
           </CardContent>
@@ -240,7 +284,7 @@ const Navigation = () => {
             </p>
             {userPosition && (
               <p className="text-green-500 text-sm mt-2">
-                📍 Position GPS active
+                📍 Position GPS: {userPosition.lat.toFixed(4)}, {userPosition.lon.toFixed(4)}
               </p>
             )}
           </CardContent>
