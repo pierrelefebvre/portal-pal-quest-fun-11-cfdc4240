@@ -18,6 +18,7 @@ const Navigation = () => {
   const [error, setError] = useState<string | null>(null);
   const [isNative, setIsNative] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
+  const [targetBearing, setTargetBearing] = useState(0); // Direction absolue vers le portail
 
   // Position du portail à Croix - Place Jean Jaurès (centre ville)
   const targetPosition = { lat: 50.6765, lon: 3.1516 };
@@ -40,6 +41,13 @@ const Navigation = () => {
       }
     };
   }, []);
+
+  // Recalculer la direction relative quand la boussole change
+  useEffect(() => {
+    if (userPosition) {
+      updateRelativeDirection();
+    }
+  }, [compass, targetBearing]);
 
   const initializeSensors = async () => {
     try {
@@ -250,24 +258,46 @@ const Navigation = () => {
     console.log('Distance calculée:', calculatedDistance);
     setDistance(calculatedDistance);
 
-    // Calculer la direction (bearing)
+    // Calculer la direction absolue (bearing) vers le portail
     const y = Math.sin(Δλ) * Math.cos(φ2);
     const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
     const θ = Math.atan2(y, x);
     const bearing = (θ * 180/Math.PI + 360) % 360;
 
-    console.log('Direction calculée:', bearing);
-
-    // Convertir en direction cardinale
-    if (bearing >= 315 || bearing < 45) setDirection('north');
-    else if (bearing >= 45 && bearing < 135) setDirection('east');
-    else if (bearing >= 135 && bearing < 225) setDirection('south');
-    else setDirection('west');
+    console.log('Direction absolue calculée:', bearing);
+    setTargetBearing(bearing);
 
     // Mettre à jour la température selon la distance (distances ajustées pour Croix)
     if (calculatedDistance < 20) setTemperature('hot');
     else if (calculatedDistance < 100) setTemperature('warm');
     else setTemperature('cold');
+
+    // Calculer la direction relative immédiatement
+    updateRelativeDirection(bearing);
+  };
+
+  const updateRelativeDirection = (bearing?: number) => {
+    const targetBear = bearing !== undefined ? bearing : targetBearing;
+    
+    // Calculer la différence entre la direction du portail et l'orientation de l'appareil
+    let relativeBearing = targetBear - compass;
+    
+    // Normaliser l'angle entre -180 et 180
+    if (relativeBearing > 180) relativeBearing -= 360;
+    if (relativeBearing < -180) relativeBearing += 360;
+
+    console.log('Direction relative:', relativeBearing, 'compass:', compass, 'target:', targetBear);
+
+    // Convertir en direction relative à l'appareil
+    if (relativeBearing >= -45 && relativeBearing < 45) {
+      setDirection('north'); // Devant
+    } else if (relativeBearing >= 45 && relativeBearing < 135) {
+      setDirection('east'); // À droite
+    } else if (relativeBearing >= 135 || relativeBearing < -135) {
+      setDirection('south'); // Derrière
+    } else {
+      setDirection('west'); // À gauche
+    }
   };
 
   const getTemperatureMessage = () => {
@@ -289,10 +319,10 @@ const Navigation = () => {
 
   const getDirectionText = () => {
     switch (direction) {
-      case 'north': return "Va vers le Nord 🧭";
-      case 'south': return "Va vers le Sud 🧭";
-      case 'east': return "Va vers l'Est 🧭";
-      case 'west': return "Va vers l'Ouest 🧭";
+      case 'north': return "Continue tout droit 🧭";
+      case 'south': return "Fais demi-tour 🧭";
+      case 'east': return "Tourne à droite 🧭";
+      case 'west': return "Tourne à gauche 🧭";
     }
   };
 
