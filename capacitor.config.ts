@@ -15,6 +15,12 @@ const config: CapacitorConfig = {
       backgroundColor: '#EB459E',
       showSpinner: true,
       spinnerColor: '#FFFFFF'
+    },
+    Geolocation: {
+      permissions: ["location"]
+    },
+    DeviceMotion: {
+      permissions: ["motion"]
     }
   }
 };
