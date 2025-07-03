@@ -289,23 +289,23 @@ const Navigation = () => {
     console.log('Direction relative:', relativeBearing, 'compass:', compass, 'target:', targetBear);
 
     // Convertir en direction relative à l'appareil (8 directions, tous les 45°)
-    // Correction: inverser nord et sud
+    // Correction: inverser seulement nord et sud (devant/derrière)
     if (relativeBearing >= -22.5 && relativeBearing < 22.5) {
-      setDirection('south'); // Le portail est devant nous
+      setDirection('north'); // Le portail est devant nous
     } else if (relativeBearing >= 22.5 && relativeBearing < 67.5) {
-      setDirection('southwest'); // Devant-gauche
+      setDirection('northwest'); // Devant-gauche
     } else if (relativeBearing >= 67.5 && relativeBearing < 112.5) {
       setDirection('west'); // À gauche
     } else if (relativeBearing >= 112.5 && relativeBearing < 157.5) {
-      setDirection('northwest'); // Derrière-gauche
+      setDirection('southwest'); // Derrière-gauche
     } else if (relativeBearing >= 157.5 || relativeBearing < -157.5) {
-      setDirection('north'); // Le portail est derrière nous
+      setDirection('south'); // Le portail est derrière nous
     } else if (relativeBearing >= -157.5 && relativeBearing < -112.5) {
-      setDirection('northeast'); // Derrière-droite
+      setDirection('southeast'); // Derrière-droite
     } else if (relativeBearing >= -112.5 && relativeBearing < -67.5) {
       setDirection('east'); // À droite
     } else {
-      setDirection('southeast'); // Devant-droite
+      setDirection('northeast'); // Devant-droite
     }
   };
 
