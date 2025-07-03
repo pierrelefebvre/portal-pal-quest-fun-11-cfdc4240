@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,7 +127,7 @@ const Mission = () => {
               <CardContent className="p-6 text-center">
                 <div className="text-5xl mb-4">🔍✨</div>
                 <Button 
-                  onClick={() => navigate('/portal/1')}
+                  onClick={() => navigate('/navigation')}
                   disabled={!canScanPortal}
                   className={`w-full font-bold py-4 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all duration-200 ${
                     canScanPortal 
@@ -136,11 +135,11 @@ const Mission = () => {
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  {canScanPortal ? '🔮 Scanner le portail' : '🔒 Rapproche-toi du portail'}
+                  {canScanPortal ? '🧭 Naviguer vers le portail' : '🔒 Rapproche-toi du portail'}
                 </Button>
                 {!canScanPortal && (
                   <p className="text-gray-500 text-sm mt-2">
-                    Tu dois être très proche pour scanner !
+                    Tu dois être très proche pour naviguer !
                   </p>
                 )}
               </CardContent>
