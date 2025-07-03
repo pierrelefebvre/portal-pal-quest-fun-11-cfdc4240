@@ -62,6 +62,14 @@ const Navigation = () => {
     }
   }, [compass, targetBearing]);
 
+  // Recalculer la position et direction quand le portail cible change
+  useEffect(() => {
+    if (userPosition) {
+      console.log('Destination changée, recalcul de la direction vers:', targetName);
+      calculateDistanceAndDirection(userPosition);
+    }
+  }, [targetId, targetName]);
+
   const initializeSensors = async () => {
     try {
       console.log('Initialisation des capteurs, plateforme native:', Capacitor.isNativePlatform());
@@ -277,7 +285,7 @@ const Navigation = () => {
     const θ = Math.atan2(y, x);
     const bearing = (θ * 180/Math.PI + 360) % 360;
 
-    console.log('Direction absolue calculée:', bearing);
+    console.log('Direction absolue calculée:', bearing, 'vers', targetName);
     setTargetBearing(bearing);
 
     // Mettre à jour la température selon la distance (distances ajustées pour Croix)
@@ -302,23 +310,22 @@ const Navigation = () => {
     console.log('Direction relative:', relativeBearing, 'compass:', compass, 'target:', targetBear);
 
     // Convertir en direction relative à l'appareil (8 directions, tous les 45°)
-    // Correction: inverser seulement nord et sud (devant/derrière)
     if (relativeBearing >= -22.5 && relativeBearing < 22.5) {
       setDirection('north'); // Le portail est devant nous
     } else if (relativeBearing >= 22.5 && relativeBearing < 67.5) {
-      setDirection('northwest'); // Devant-gauche
+      setDirection('northeast'); // Devant-droite
     } else if (relativeBearing >= 67.5 && relativeBearing < 112.5) {
-      setDirection('west'); // À gauche
+      setDirection('east'); // À droite
     } else if (relativeBearing >= 112.5 && relativeBearing < 157.5) {
-      setDirection('southwest'); // Derrière-gauche
+      setDirection('southeast'); // Derrière-droite
     } else if (relativeBearing >= 157.5 || relativeBearing < -157.5) {
       setDirection('south'); // Le portail est derrière nous
     } else if (relativeBearing >= -157.5 && relativeBearing < -112.5) {
-      setDirection('southeast'); // Derrière-droite
+      setDirection('southwest'); // Derrière-gauche
     } else if (relativeBearing >= -112.5 && relativeBearing < -67.5) {
-      setDirection('east'); // À droite
+      setDirection('west'); // À gauche
     } else {
-      setDirection('northeast'); // Devant-droite
+      setDirection('northwest'); // Devant-gauche
     }
   };
 
