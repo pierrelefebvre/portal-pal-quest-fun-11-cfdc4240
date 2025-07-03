@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, ArrowUpLeft, ArrowDownRight, ArrowDownLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Motion } from '@capacitor/motion';
 import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
 
 const Navigation = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [distance, setDistance] = useState<number>(150);
   const [temperature, setTemperature] = useState<'cold' | 'warm' | 'hot'>('cold');
   const [direction, setDirection] = useState<'north' | 'northeast' | 'east' | 'southeast' | 'south' | 'southwest' | 'west' | 'northwest'>('north');
@@ -20,9 +21,20 @@ const Navigation = () => {
   const [watchId, setWatchId] = useState<number | null>(null);
   const [targetBearing, setTargetBearing] = useState(0); // Direction absolue vers le portail
 
-  // Position du portail à Croix - Place Jean Jaurès (centre ville)
-  const targetPosition = { lat: 50.6765, lon: 3.1516 };
-  const targetName = "Place Jean Jaurès";
+  // Portails disponibles avec leurs coordonnées
+  const portals = [
+    { id: 1, name: "Place Jean Jaurès", lat: 50.6765, lon: 3.1516 },
+    { id: 2, name: "Parc Barbieux", lat: 50.6720, lon: 3.1450 },
+    { id: 3, name: "Église Saint-Martin", lat: 50.6780, lon: 3.1530 },
+    { id: 4, name: "Mairie de Croix", lat: 50.6750, lon: 3.1500 },
+    { id: 5, name: "Stade Amédée Prouvost", lat: 50.6800, lon: 3.1580 },
+  ];
+
+  // Déterminer le portail cible basé sur l'URL
+  const targetId = searchParams.get('target') ? parseInt(searchParams.get('target')!) : 1;
+  const targetPortal = portals.find(p => p.id === targetId) || portals[0];
+  const targetPosition = { lat: targetPortal.lat, lon: targetPortal.lon };
+  const targetName = targetPortal.name;
 
   useEffect(() => {
     // Vérifier si on est sur une plateforme native
