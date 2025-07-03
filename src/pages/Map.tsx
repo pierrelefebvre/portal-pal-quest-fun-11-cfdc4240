@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowDown, MapPin, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Map = () => {
   const navigate = useNavigate();
@@ -18,6 +19,16 @@ const Map = () => {
     { id: 5, name: "Stade Amédée Prouvost", found: false, x: 70, y: 70, hint: "Près du terrain" },
   ];
 
+  const handlePortalClick = (portal: typeof portals[0]) => {
+    if (portal.found) {
+      toast.success(`📍 Portail ${portal.name} déjà découvert !`);
+      navigate(`/portal/${portal.id}`);
+    } else {
+      toast.info(`🧭 Navigation vers ${portal.name} activée !`);
+      navigate('/navigation');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-green-50 to-yellow-100 p-4">
       <div className="max-w-md mx-auto">
@@ -29,6 +40,9 @@ const Map = () => {
           </h1>
           <p className="text-blue-600">
             Découvre tous les portails de ta ville !
+          </p>
+          <p className="text-blue-500 text-sm mt-2">
+            💡 Clique sur un portail pour naviguer vers lui
           </p>
         </div>
 
@@ -58,7 +72,7 @@ const Map = () => {
                   key={portal.id}
                   className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer hover:scale-110 transition-transform"
                   style={{ left: `${portal.x}%`, top: `${portal.y}%` }}
-                  onClick={() => navigate(`/portal/${portal.id}`)}
+                  onClick={() => handlePortalClick(portal)}
                 >
                   <div className={`w-6 h-6 rounded-full border-2 border-white shadow-lg ${
                     portal.found 
@@ -88,11 +102,12 @@ const Map = () => {
               {portals.map((portal) => (
                 <div
                   key={portal.id}
-                  className={`flex items-center justify-between p-3 rounded-lg border-2 ${
+                  className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer hover:scale-105 transition-transform ${
                     portal.found 
                       ? 'bg-green-100 border-green-300' 
                       : 'bg-purple-100 border-purple-300'
                   }`}
+                  onClick={() => handlePortalClick(portal)}
                 >
                   <div className="flex items-center">
                     <div className={`w-6 h-6 rounded-full mr-3 flex items-center justify-center text-white font-bold ${
@@ -106,7 +121,7 @@ const Map = () => {
                     </div>
                   </div>
                   <Badge className={portal.found ? 'bg-green-200 text-green-800' : 'bg-purple-200 text-purple-800'}>
-                    {portal.found ? 'Trouvé' : 'À chercher'}
+                    {portal.found ? 'Trouvé' : 'Naviguer'}
                   </Badge>
                 </div>
               ))}

@@ -22,6 +22,7 @@ const Navigation = () => {
 
   // Position du portail à Croix - Place Jean Jaurès (centre ville)
   const targetPosition = { lat: 50.6765, lon: 3.1516 };
+  const targetName = "Place Jean Jaurès";
 
   useEffect(() => {
     // Vérifier si on est sur une plateforme native
@@ -433,6 +434,26 @@ const Navigation = () => {
             Mode: {isNative ? 'Natif' : 'Web'} • Suivi GPS continu
           </p>
         </div>
+
+        {/* Destination */}
+        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-indigo-200">
+          <CardContent className="p-6 text-center">
+            <div className="text-4xl mb-3">🎯</div>
+            <p className="text-indigo-800 font-bold text-lg mb-2">
+              Destination actuelle
+            </p>
+            <p className="text-indigo-600 text-xl font-semibold">
+              📍 {targetName}
+            </p>
+            <Button
+              onClick={() => navigate('/map')}
+              variant="outline"
+              className="mt-3 bg-indigo-100 border-indigo-300 text-indigo-700 hover:bg-indigo-200"
+            >
+              📍 Changer de destination
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Boussole */}
         <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-purple-200">
