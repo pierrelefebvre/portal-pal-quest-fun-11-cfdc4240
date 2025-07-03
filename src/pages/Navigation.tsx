@@ -21,13 +21,13 @@ const Navigation = () => {
   const [watchId, setWatchId] = useState<number | null>(null);
   const [targetBearing, setTargetBearing] = useState(0); // Direction absolue vers le portail
 
-  // Portails disponibles avec leurs coordonnées
+  // Portails avec coordonnées GPS précises de Croix
   const portals = [
-    { id: 1, name: "Place Jean Jaurès", lat: 50.6765, lon: 3.1516 },
-    { id: 2, name: "Parc Barbieux", lat: 50.6720, lon: 3.1450 },
-    { id: 3, name: "Église Saint-Martin", lat: 50.6780, lon: 3.1530 },
-    { id: 4, name: "Mairie de Croix", lat: 50.6750, lon: 3.1500 },
-    { id: 5, name: "Stade Amédée Prouvost", lat: 50.6800, lon: 3.1580 },
+    { id: 1, name: "Place Jean Jaurès", lat: 50.67648, lon: 3.15159 },
+    { id: 2, name: "Parc Barbieux", lat: 50.67204, lon: 3.14502 },
+    { id: 3, name: "Église Saint-Martin", lat: 50.67801, lon: 3.15298 },
+    { id: 4, name: "Mairie de Croix", lat: 50.67502, lon: 3.15001 },
+    { id: 5, name: "Stade Amédée Prouvost", lat: 50.68001, lon: 3.15798 },
   ];
 
   // Déterminer le portail cible basé sur l'URL
@@ -313,19 +313,19 @@ const Navigation = () => {
     if (relativeBearing >= -22.5 && relativeBearing < 22.5) {
       setDirection('north'); // Le portail est devant nous
     } else if (relativeBearing >= 22.5 && relativeBearing < 67.5) {
-      setDirection('northeast'); // Devant-droite
+      setDirection('northwest'); // Devant-gauche
     } else if (relativeBearing >= 67.5 && relativeBearing < 112.5) {
-      setDirection('east'); // À droite
+      setDirection('west'); // À gauche
     } else if (relativeBearing >= 112.5 && relativeBearing < 157.5) {
-      setDirection('southeast'); // Derrière-droite
+      setDirection('southwest'); // Derrière-gauche
     } else if (relativeBearing >= 157.5 || relativeBearing < -157.5) {
       setDirection('south'); // Le portail est derrière nous
     } else if (relativeBearing >= -157.5 && relativeBearing < -112.5) {
-      setDirection('southwest'); // Derrière-gauche
+      setDirection('southeast'); // Derrière-droite
     } else if (relativeBearing >= -112.5 && relativeBearing < -67.5) {
-      setDirection('west'); // À gauche
+      setDirection('east'); // À droite
     } else {
-      setDirection('northwest'); // Devant-gauche
+      setDirection('northeast'); // Devant-droite
     }
   };
 

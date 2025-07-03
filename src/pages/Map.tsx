@@ -10,13 +10,13 @@ import { toast } from "sonner";
 const Map = () => {
   const navigate = useNavigate();
   
-  // Portails basés sur des lieux réels de Croix près de Lille
+  // Portails avec coordonnées GPS précises de Croix près de Lille
   const portals = [
-    { id: 1, name: "Place Jean Jaurès", found: false, x: 50, y: 50, hint: "Au centre de la place", lat: 50.6765, lon: 3.1516 },
-    { id: 2, name: "Parc Barbieux", found: false, x: 30, y: 30, hint: "Près de l'étang", lat: 50.6720, lon: 3.1450 },
-    { id: 3, name: "Église Saint-Martin", found: true, x: 60, y: 45, hint: "Devant le parvis", lat: 50.6780, lon: 3.1530 },
-    { id: 4, name: "Mairie de Croix", found: false, x: 45, y: 55, hint: "À l'entrée principale", lat: 50.6750, lon: 3.1500 },
-    { id: 5, name: "Stade Amédée Prouvost", found: false, x: 70, y: 70, hint: "Près du terrain", lat: 50.6800, lon: 3.1580 },
+    { id: 1, name: "Place Jean Jaurès", found: false, x: 50, y: 50, hint: "Au centre de la place", lat: 50.67648, lon: 3.15159 },
+    { id: 2, name: "Parc Barbieux", found: false, x: 30, y: 30, hint: "Près de l'étang", lat: 50.67204, lon: 3.14502 },
+    { id: 3, name: "Église Saint-Martin", found: true, x: 60, y: 45, hint: "Devant le parvis", lat: 50.67801, lon: 3.15298 },
+    { id: 4, name: "Mairie de Croix", found: false, x: 45, y: 55, hint: "À l'entrée principale", lat: 50.67502, lon: 3.15001 },
+    { id: 5, name: "Stade Amédée Prouvost", found: false, x: 70, y: 70, hint: "Près du terrain", lat: 50.68001, lon: 3.15798 },
   ];
 
   const handlePortalClick = (portal: typeof portals[0]) => {
