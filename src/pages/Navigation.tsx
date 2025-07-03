@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { DeviceMotion } from '@capacitor/device-motion';
+import { Motion } from '@capacitor/motion';
 import { Geolocation } from '@capacitor/geolocation';
 
 const Navigation = () => {
@@ -23,7 +23,7 @@ const Navigation = () => {
     initializeSensors();
     return () => {
       // Nettoyer les listeners
-      DeviceMotion.removeAllListeners();
+      Motion.removeAllListeners();
     };
   }, []);
 
@@ -93,7 +93,7 @@ const Navigation = () => {
   const startCompass = async () => {
     try {
       // Démarrer l'écoute de l'orientation du dispositif
-      await DeviceMotion.addListener('orientation', (event) => {
+      await Motion.addListener('orientation', (event) => {
         if (event.alpha !== null) {
           // Alpha représente la rotation autour de l'axe Z (boussole)
           setCompass(Math.round(event.alpha));
