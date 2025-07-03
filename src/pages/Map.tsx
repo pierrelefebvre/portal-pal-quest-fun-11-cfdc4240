@@ -9,12 +9,13 @@ import { useNavigate } from "react-router-dom";
 const Map = () => {
   const navigate = useNavigate();
   
+  // Portails basés sur des lieux réels de Croix près de Lille
   const portals = [
-    { id: 1, name: "Bibliothèque", found: false, x: 40, y: 60, hint: "Près des grandes fenêtres" },
-    { id: 2, name: "Parc Central", found: false, x: 70, y: 30, hint: "Sous le grand chêne" },
-    { id: 3, name: "École", found: true, x: 20, y: 80, hint: "Dans la cour de récré" },
-    { id: 4, name: "Mairie", found: false, x: 80, y: 70, hint: "Près de la fontaine" },
-    { id: 5, name: "Stade", found: false, x: 50, y: 20, hint: "Aux gradins" },
+    { id: 1, name: "Place Jean Jaurès", found: false, x: 50, y: 50, hint: "Au centre de la place" },
+    { id: 2, name: "Parc Barbieux", found: false, x: 30, y: 30, hint: "Près de l'étang" },
+    { id: 3, name: "Église Saint-Martin", found: true, x: 60, y: 45, hint: "Devant le parvis" },
+    { id: 4, name: "Mairie de Croix", found: false, x: 45, y: 55, hint: "À l'entrée principale" },
+    { id: 5, name: "Stade Amédée Prouvost", found: false, x: 70, y: 70, hint: "Près du terrain" },
   ];
 
   return (
@@ -24,10 +25,10 @@ const Map = () => {
         <div className="text-center mb-6 pt-6">
           <div className="text-5xl mb-3">🗺️✨</div>
           <h1 className="text-3xl font-bold text-blue-800 mb-2">
-            Carte Magique
+            Carte de Croix
           </h1>
           <p className="text-blue-600">
-            Découvre tous les portails cachés !
+            Découvre tous les portails de ta ville !
           </p>
         </div>
 
@@ -35,12 +36,13 @@ const Map = () => {
         <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-blue-200">
           <CardContent className="p-4">
             <div className="relative bg-gradient-to-br from-green-200 to-green-300 rounded-lg h-80 overflow-hidden border-2 border-green-400">
-              {/* Terrain elements */}
-              <div className="absolute top-4 left-4 w-8 h-8 bg-brown-400 rounded-full"></div>
-              <div className="absolute top-12 right-8 w-12 h-8 bg-blue-400 rounded-lg"></div>
-              <div className="absolute bottom-8 left-8 w-10 h-6 bg-gray-400 rounded-lg"></div>
+              {/* Terrain elements représentant Croix */}
+              <div className="absolute top-6 left-6 w-12 h-8 bg-blue-400 rounded-lg" title="Parc Barbieux"></div>
+              <div className="absolute top-12 right-8 w-8 h-8 bg-brown-600 rounded-sm" title="Église"></div>
+              <div className="absolute bottom-12 left-12 w-10 h-6 bg-gray-500 rounded-lg" title="Mairie"></div>
+              <div className="absolute bottom-8 right-8 w-14 h-10 bg-green-600 rounded-lg" title="Stade"></div>
               
-              {/* Roads */}
+              {/* Routes principales */}
               <div className="absolute top-1/2 left-0 right-0 h-2 bg-gray-300 transform -translate-y-1/2"></div>
               <div className="absolute top-0 bottom-0 left-1/2 w-2 bg-gray-300 transform -translate-x-1/2"></div>
               
@@ -80,7 +82,7 @@ const Map = () => {
         <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg">
           <CardContent className="p-4">
             <h3 className="text-lg font-bold text-purple-800 mb-4 text-center">
-              🎯 Portails à découvrir
+              🎯 Portails de Croix à découvrir
             </h3>
             <div className="space-y-2">
               {portals.map((portal) => (

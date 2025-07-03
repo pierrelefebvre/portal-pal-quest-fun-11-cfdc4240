@@ -18,8 +18,8 @@ const Navigation = () => {
   const [error, setError] = useState<string | null>(null);
   const [isNative, setIsNative] = useState(false);
 
-  // Position fixe du portail (exemple: bibliothèque)
-  const targetPosition = { lat: 48.8566, lon: 2.3522 }; // Coordonnées d'exemple (Paris)
+  // Position du portail à Croix - Place Jean Jaurès (centre ville)
+  const targetPosition = { lat: 50.6765, lon: 3.1516 };
 
   useEffect(() => {
     // Vérifier si on est sur une plateforme native
@@ -255,8 +255,8 @@ const Navigation = () => {
     else if (bearing >= 135 && bearing < 225) setDirection('south');
     else setDirection('west');
 
-    // Mettre à jour la température selon la distance
-    if (calculatedDistance < 50) setTemperature('hot');
+    // Mettre à jour la température selon la distance (distances ajustées pour Croix)
+    if (calculatedDistance < 20) setTemperature('hot');
     else if (calculatedDistance < 100) setTemperature('warm');
     else setTemperature('cold');
   };
