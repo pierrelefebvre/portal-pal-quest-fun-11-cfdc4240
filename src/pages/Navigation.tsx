@@ -17,6 +17,7 @@ const Navigation = () => {
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isNative, setIsNative] = useState(false);
+  const [watchId, setWatchId] = useState<number | null>(null);
 
   // Position du portail à Croix - Place Jean Jaurès (centre ville)
   const targetPosition = { lat: 50.6765, lon: 3.1516 };
@@ -28,62 +29,17 @@ const Navigation = () => {
     // Demander les permissions et initialiser les capteurs
     initializeSensors();
 
-    // Mettre en place une actualisation continue de la position
-    const positionUpdateInterval = setInterval(() => {
-      if (permissionGranted) {
-        updateCurrentPosition();
-      }
-    }, 2000); // Actualiser toutes les 2 secondes
-
     return () => {
       // Nettoyer les listeners
       if (isNative) {
         Motion.removeAllListeners();
       }
-      clearInterval(positionUpdateInterval);
-    };
-  }, [permissionGranted]);
-
-  const updateCurrentPosition = async () => {
-    try {
-      if (Capacitor.isNativePlatform()) {
-        // Mode natif
-        const position = await Geolocation.getCurrentPosition({
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 1000
-        });
-        const userPos = {
-          lat: position.coords.latitude,
-          lon: position.coords.longitude
-        };
-        setUserPosition(userPos);
-        calculateDistanceAndDirection(userPos);
-      } else {
-        // Mode web
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const userPos = {
-              lat: position.coords.latitude,
-              lon: position.coords.longitude
-            };
-            setUserPosition(userPos);
-            calculateDistanceAndDirection(userPos);
-          },
-          (error) => {
-            console.error('Erreur de mise à jour de position:', error);
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 1000
-          }
-        );
+      // Arrêter le suivi de position
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
       }
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour de position:', error);
-    }
-  };
+    };
+  }, []);
 
   const initializeSensors = async () => {
     try {
@@ -182,7 +138,7 @@ const Navigation = () => {
       // Position initiale
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log('Position obtenue:', position);
+          console.log('Position initiale obtenue:', position);
           const userPos = {
             lat: position.coords.latitude,
             lon: position.coords.longitude
@@ -191,7 +147,7 @@ const Navigation = () => {
           calculateDistanceAndDirection(userPos);
         },
         (error) => {
-          console.error('Erreur de géolocalisation:', error);
+          console.error('Erreur de géolocalisation initiale:', error);
           setError('Impossible d\'accéder à la géolocalisation');
         },
         {
@@ -201,9 +157,10 @@ const Navigation = () => {
         }
       );
 
-      // Surveiller les changements de position
-      navigator.geolocation.watchPosition(
+      // Surveiller les changements de position en continu
+      const watchId = navigator.geolocation.watchPosition(
         (position) => {
+          console.log('Position mise à jour:', position);
           const newPos = {
             lat: position.coords.latitude,
             lon: position.coords.longitude
@@ -217,9 +174,11 @@ const Navigation = () => {
         {
           enableHighAccuracy: true,
           timeout: 10000,
-          maximumAge: 60000
+          maximumAge: 5000 // Actualiser au maximum toutes les 5 secondes
         }
       );
+
+      setWatchId(watchId);
 
     } catch (error) {
       console.error('Erreur de géolocalisation web:', error);
@@ -424,7 +383,7 @@ const Navigation = () => {
           </h1>
           <p className="text-purple-600">Suis les flèches pour trouver le portail !</p>
           <p className="text-purple-500 text-sm">
-            Mode: {isNative ? 'Natif' : 'Web'} • Mise à jour continue
+            Mode: {isNative ? 'Natif' : 'Web'} • Suivi GPS continu
           </p>
         </div>
 
