@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Motion } from '@capacitor/motion';
 import { Geolocation } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
 
 const Navigation = () => {
   const navigate = useNavigate();
@@ -16,38 +16,36 @@ const Navigation = () => {
   const [userPosition, setUserPosition] = useState<{lat: number, lon: number} | null>(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isNative, setIsNative] = useState(false);
 
   // Position fixe du portail (exemple: bibliothèque)
   const targetPosition = { lat: 48.8566, lon: 2.3522 }; // Coordonnées d'exemple (Paris)
 
   useEffect(() => {
+    // Vérifier si on est sur une plateforme native
+    setIsNative(Capacitor.isNativePlatform());
+    
     // Demander les permissions et initialiser les capteurs
     initializeSensors();
     return () => {
       // Nettoyer les listeners
-      Motion.removeAllListeners();
+      if (isNative) {
+        Motion.removeAllListeners();
+      }
     };
   }, []);
 
   const initializeSensors = async () => {
     try {
-      // Vérifier et demander les permissions de géolocalisation
-      const permissions = await Geolocation.checkPermissions();
-      if (permissions.location !== 'granted') {
-        const request = await Geolocation.requestPermissions();
-        if (request.location !== 'granted') {
-          setError('Permissions de géolocalisation requises pour utiliser la navigation');
-          return;
-        }
+      console.log('Initialisation des capteurs, plateforme native:', Capacitor.isNativePlatform());
+      
+      if (Capacitor.isNativePlatform()) {
+        // Mode natif - utiliser les capteurs Capacitor
+        await initializeNativeSensors();
+      } else {
+        // Mode web - utiliser les APIs standard du navigateur
+        await initializeWebSensors();
       }
-
-      setPermissionGranted(true);
-      
-      // Démarrer la géolocalisation
-      await startGeolocation();
-      
-      // Démarrer le gyroscope/boussole
-      await startCompass();
       
     } catch (error) {
       console.error('Erreur lors de l\'initialisation des capteurs:', error);
@@ -55,7 +53,45 @@ const Navigation = () => {
     }
   };
 
-  const startGeolocation = async () => {
+  const initializeNativeSensors = async () => {
+    // Vérifier et demander les permissions de géolocalisation
+    const permissions = await Geolocation.checkPermissions();
+    if (permissions.location !== 'granted') {
+      const request = await Geolocation.requestPermissions();
+      if (request.location !== 'granted') {
+        setError('Permissions de géolocalisation requises pour utiliser la navigation');
+        return;
+      }
+    }
+
+    setPermissionGranted(true);
+    
+    // Démarrer la géolocalisation native
+    await startNativeGeolocation();
+    
+    // Démarrer le gyroscope/boussole natif
+    await startNativeCompass();
+  };
+
+  const initializeWebSensors = async () => {
+    console.log('Initialisation des capteurs web...');
+    
+    // Vérifier si la géolocalisation est disponible
+    if (!navigator.geolocation) {
+      setError('Géolocalisation non supportée par ce navigateur');
+      return;
+    }
+
+    setPermissionGranted(true);
+    
+    // Démarrer la géolocalisation web
+    await startWebGeolocation();
+    
+    // Démarrer la boussole web
+    await startWebCompass();
+  };
+
+  const startNativeGeolocation = async () => {
     try {
       // Position initiale
       const position = await Geolocation.getCurrentPosition();
@@ -84,12 +120,64 @@ const Navigation = () => {
       );
 
     } catch (error) {
-      console.error('Erreur de géolocalisation:', error);
+      console.error('Erreur de géolocalisation native:', error);
       setError('Impossible d\'accéder à la géolocalisation');
     }
   };
 
-  const startCompass = async () => {
+  const startWebGeolocation = async () => {
+    try {
+      console.log('Démarrage de la géolocalisation web...');
+      
+      // Position initiale
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('Position obtenue:', position);
+          const userPos = {
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          };
+          setUserPosition(userPos);
+          calculateDistanceAndDirection(userPos);
+        },
+        (error) => {
+          console.error('Erreur de géolocalisation:', error);
+          setError('Impossible d\'accéder à la géolocalisation');
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        }
+      );
+
+      // Surveiller les changements de position
+      navigator.geolocation.watchPosition(
+        (position) => {
+          const newPos = {
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          };
+          setUserPosition(newPos);
+          calculateDistanceAndDirection(newPos);
+        },
+        (error) => {
+          console.error('Erreur de surveillance géolocalisation:', error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        }
+      );
+
+    } catch (error) {
+      console.error('Erreur de géolocalisation web:', error);
+      setError('Impossible d\'accéder à la géolocalisation');
+    }
+  };
+
+  const startNativeCompass = async () => {
     try {
       // Démarrer l'écoute de l'orientation du dispositif
       await Motion.addListener('orientation', (event) => {
@@ -99,12 +187,44 @@ const Navigation = () => {
         }
       });
     } catch (error) {
-      console.error('Erreur du gyroscope:', error);
+      console.error('Erreur du gyroscope natif:', error);
       setError('Impossible d\'accéder au gyroscope');
     }
   };
 
+  const startWebCompass = async () => {
+    try {
+      console.log('Démarrage de la boussole web...');
+      
+      // Vérifier si l'orientation est supportée
+      if (window.DeviceOrientationEvent) {
+        // Demander les permissions pour iOS 13+
+        if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+          const permission = await (DeviceOrientationEvent as any).requestPermission();
+          if (permission !== 'granted') {
+            console.log('Permission d\'orientation refusée');
+            return;
+          }
+        }
+
+        window.addEventListener('deviceorientation', (event) => {
+          if (event.alpha !== null) {
+            setCompass(Math.round(event.alpha));
+          }
+        });
+        
+        console.log('Écoute de l\'orientation activée');
+      } else {
+        console.log('DeviceOrientationEvent non supporté');
+      }
+    } catch (error) {
+      console.error('Erreur de la boussole web:', error);
+    }
+  };
+
   const calculateDistanceAndDirection = (userPos: {lat: number, lon: number}) => {
+    console.log('Calcul distance et direction:', userPos, 'vers', targetPosition);
+    
     // Calculer la distance en utilisant la formule de Haversine
     const R = 6371e3; // Rayon de la Terre en mètres
     const φ1 = userPos.lat * Math.PI/180;
@@ -118,6 +238,7 @@ const Navigation = () => {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
     const calculatedDistance = R * c;
+    console.log('Distance calculée:', calculatedDistance);
     setDistance(calculatedDistance);
 
     // Calculer la direction (bearing)
@@ -125,6 +246,8 @@ const Navigation = () => {
     const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
     const θ = Math.atan2(y, x);
     const bearing = (θ * 180/Math.PI + 360) % 360;
+
+    console.log('Direction calculée:', bearing);
 
     // Convertir en direction cardinale
     if (bearing >= 315 || bearing < 45) setDirection('north');
@@ -179,7 +302,10 @@ const Navigation = () => {
           <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-red-200">
             <CardContent className="p-6 text-center">
               <p className="text-red-700 mb-4">
-                Pour utiliser la navigation, vous devez activer les permissions de géolocalisation et de mouvement.
+                {isNative 
+                  ? "Pour utiliser la navigation, vous devez activer les permissions de géolocalisation et de mouvement."
+                  : "Assurez-vous d'autoriser l'accès à la géolocalisation dans votre navigateur."
+                }
               </p>
               <Button 
                 onClick={initializeSensors}
@@ -228,7 +354,7 @@ const Navigation = () => {
             <CardContent className="p-6 text-center">
               <div className="animate-spin text-4xl mb-4">🔄</div>
               <p className="text-purple-700">
-                Demande d'accès aux capteurs...
+                {isNative ? "Demande d'accès aux capteurs..." : "Demande d'accès à la géolocalisation..."}
               </p>
             </CardContent>
           </Card>
@@ -247,6 +373,9 @@ const Navigation = () => {
             Navigation Magique
           </h1>
           <p className="text-purple-600">Suis les flèches pour trouver le portail !</p>
+          <p className="text-purple-500 text-sm">
+            Mode: {isNative ? 'Natif' : 'Web'}
+          </p>
         </div>
 
         {/* Boussole */}
