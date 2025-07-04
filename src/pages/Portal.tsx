@@ -5,44 +5,72 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import { usePortals } from "@/contexts/PortalContext";
 
 const Portal = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [showAnimation, setShowAnimation] = useState(true);
+  const { markPortalAsFound } = usePortals();
 
   const portals = {
     '1': {
-      name: "Portail de la Bibliothèque",
-      description: "Ce portail magique garde les secrets de tous les livres du monde ! Les mots s'envolent et dansent autour de toi.",
-      reward: "Badge Lecteur Magique",
-      emoji: "📚✨",
+      name: "Portail de la Place Jean Jaurès",
+      description: "Ce portail magique garde les secrets du cœur de la ville ! Les énergies se rassemblent ici depuis des siècles.",
+      reward: "Badge Explorateur du Centre",
+      emoji: "🏛️✨",
       color: "from-blue-500 to-purple-600"
     },
     '2': {
-      name: "Portail du Parc",
+      name: "Portail du Parc Barbieux",
       description: "Un portail de la nature où les arbres murmurent des histoires anciennes et les fleurs brillent comme des étoiles.",
       reward: "Badge Ami des Arbres",
       emoji: "🌳🌟",
       color: "from-green-500 to-teal-600"
     },
     '3': {
-      name: "Portail de l'École", 
-      description: "Le portail de la connaissance ! Ici, chaque question trouve sa réponse et chaque rêve devient possible.",
-      reward: "Badge Super Élève",
-      emoji: "🎓⭐",
+      name: "Portail de l'Église Saint-Martin", 
+      description: "Le portail de la spiritualité ! Ici, les prières se transforment en lumière et l'histoire résonne.",
+      reward: "Badge Gardien du Patrimoine",
+      emoji: "⛪⭐",
       color: "from-yellow-500 to-orange-600"
+    },
+    '4': {
+      name: "Portail de la Mairie",
+      description: "Le portail du civisme où les décisions importantes prennent vie et la communauté se rassemble.",
+      reward: "Badge Citoyen Engagé",
+      emoji: "🏛️🏆",
+      color: "from-red-500 to-pink-600"
+    },
+    '5': {
+      name: "Portail du Stade",
+      description: "Le portail du sport et de l'effort ! L'énergie des champions résonne encore ici.",
+      reward: "Badge Champion",
+      emoji: "⚽🏟️",
+      color: "from-green-600 to-blue-500"
+    },
+    '6': {
+      name: "Portail du Decathlon",
+      description: "Le portail de l'aventure moderne ! Ici, tous les sports se rencontrent dans l'harmonie.",
+      reward: "Badge Sportif Moderne",
+      emoji: "🏃‍♂️🛍️",
+      color: "from-orange-500 to-red-500"
     }
   };
 
   const currentPortal = portals[id as keyof typeof portals] || portals['1'];
 
   useEffect(() => {
+    // Marquer le portail comme trouvé dès qu'on arrive sur la page
+    if (id) {
+      markPortalAsFound(parseInt(id));
+    }
+
     const timer = setTimeout(() => {
       setShowAnimation(false);
     }, 3000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [id, markPortalAsFound]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 p-4">
@@ -83,7 +111,6 @@ const Portal = () => {
               {currentPortal.description}
             </p>
             
-            {/* Reward */}
             <div className="bg-yellow-100 p-4 rounded-lg border-2 border-yellow-300 text-center">
               <div className="text-3xl mb-2">🏆</div>
               <p className="text-yellow-800 font-bold">
@@ -96,14 +123,13 @@ const Portal = () => {
           </CardContent>
         </Card>
 
-        {/* Progress */}
         <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg">
           <CardContent className="p-6">
             <h3 className="text-lg font-bold text-purple-800 mb-4 text-center">
               🎯 Ta progression
             </h3>
             <div className="flex justify-center items-center space-x-2 mb-4">
-              {[1, 2, 3, 4, 5].map((num) => (
+              {[1, 2, 3, 4, 5, 6].map((num) => (
                 <div
                   key={num}
                   className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
@@ -117,12 +143,11 @@ const Portal = () => {
               ))}
             </div>
             <p className="text-center text-purple-600">
-              {id}/5 portails découverts
+              {id}/6 portails découverts
             </p>
           </CardContent>
         </Card>
 
-        {/* Action Buttons */}
         <div className="space-y-4">
           <Button 
             onClick={() => navigate('/mission')}
@@ -151,7 +176,6 @@ const Portal = () => {
           </div>
         </div>
 
-        {/* Decorative elements */}
         <div className="fixed top-10 left-10 text-4xl animate-spin">⭐</div>
         <div className="fixed top-20 right-8 text-3xl animate-bounce">🎉</div>
         <div className="fixed bottom-32 left-6 text-2xl animate-pulse">✨</div>
