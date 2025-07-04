@@ -1,247 +1,566 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowUp, MapPin, Compass } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, ArrowUpLeft, ArrowDownRight, ArrowDownLeft } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { toast } from "sonner";
-import { usePortals } from "@/contexts/PortalContext";
+import { Motion } from '@capacitor/motion';
+import { Geolocation } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
 
 const Navigation = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const targetId = parseInt(searchParams.get('target') || '1');
-  const { getPortalById, markPortalAsFound } = usePortals();
-  
-  const [userPosition, setUserPosition] = useState({ lat: 50.6763, lon: 3.1518 });
-  const [isScanning, setIsScanning] = useState(false);
-  const [showAnimation, setShowAnimation] = useState(false);
+  const [distance, setDistance] = useState<number>(150);
+  const [temperature, setTemperature] = useState<'cold' | 'warm' | 'hot'>('cold');
+  const [direction, setDirection] = useState<'north' | 'northeast' | 'east' | 'southeast' | 'south' | 'southwest' | 'west' | 'northwest'>('north');
+  const [compass, setCompass] = useState(0);
+  const [userPosition, setUserPosition] = useState<{lat: number, lon: number} | null>(null);
+  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isNative, setIsNative] = useState(false);
+  const [watchId, setWatchId] = useState<number | null>(null);
+  const [targetBearing, setTargetBearing] = useState(0); // Direction absolue vers le portail
 
-  const targetPortal = getPortalById(targetId);
+  // Portails avec coordonnées GPS précises de Croix
+  const portals = [
+    { id: 1, name: "Place Jean Jaurès", lat: 50.67648, lon: 3.15159 },
+    { id: 2, name: "Parc Barbieux", lat: 50.67204, lon: 3.14502 },
+    { id: 3, name: "Église Saint-Martin", lat: 50.67801, lon: 3.15298 },
+    { id: 4, name: "Mairie de Croix", lat: 50.67502, lon: 3.15001 },
+    { id: 5, name: "Stade Amédée Prouvost", lat: 50.68001, lon: 3.15798 },
+    { id: 6, name: "Decathlon", lat: 50.67289594117399, lon: 3.148318881734259 },
+  ];
 
-  // Calculer la distance et la direction
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371000; // Rayon de la Terre en mètres
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
+  // Déterminer le portail cible basé sur l'URL
+  const targetId = searchParams.get('target') ? parseInt(searchParams.get('target')!) : 1;
+  const targetPortal = portals.find(p => p.id === targetId) || portals[0];
+  const targetPosition = { lat: targetPortal.lat, lon: targetPortal.lon };
+  const targetName = targetPortal.name;
 
-  const calculateBearing = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180);
-    const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
-              Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLon);
-    const bearing = Math.atan2(y, x) * 180 / Math.PI;
-    return (bearing + 360) % 360;
-  };
+  useEffect(() => {
+    // Vérifier si on est sur une plateforme native
+    setIsNative(Capacitor.isNativePlatform());
+    
+    // Demander les permissions et initialiser les capteurs
+    initializeSensors();
 
-  const distance = targetPortal ? calculateDistance(userPosition.lat, userPosition.lon, targetPortal.lat, targetPortal.lon) : 0;
-  const bearing = targetPortal ? calculateBearing(userPosition.lat, userPosition.lon, targetPortal.lat, targetPortal.lon) : 0;
+    return () => {
+      // Nettoyer les listeners
+      if (isNative) {
+        Motion.removeAllListeners();
+      }
+      // Arrêter le suivi de position
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, []);
 
-  const handleScan = () => {
-    if (distance <= 50) {
-      setIsScanning(true);
-      toast.success("🎉 Portail découvert !");
+  // Recalculer la direction relative quand la boussole change
+  useEffect(() => {
+    if (userPosition) {
+      updateRelativeDirection();
+    }
+  }, [compass, targetBearing]);
+
+  // Recalculer la position et direction quand le portail cible change
+  useEffect(() => {
+    if (userPosition) {
+      console.log('Destination changée, recalcul de la direction vers:', targetName);
+      calculateDistanceAndDirection(userPosition);
+    }
+  }, [targetId, targetName]);
+
+  const initializeSensors = async () => {
+    try {
+      console.log('Initialisation des capteurs, plateforme native:', Capacitor.isNativePlatform());
       
-      setTimeout(() => {
-        setIsScanning(false);
-        setShowAnimation(true);
-        
-        // Marquer le portail comme trouvé
-        if (targetPortal) {
-          markPortalAsFound(targetPortal.id);
-        }
-        
-        setTimeout(() => {
-          navigate(`/portal/${targetId}`);
-        }, 3000);
-      }, 2000);
-    } else {
-      toast.error("🚫 Trop loin ! Rapproche-toi du portail.");
+      if (Capacitor.isNativePlatform()) {
+        // Mode natif - utiliser les capteurs Capacitor
+        await initializeNativeSensors();
+      } else {
+        // Mode web - utiliser les APIs standard du navigateur
+        await initializeWebSensors();
+      }
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'initialisation des capteurs:', error);
+      setError('Impossible d\'accéder aux capteurs du dispositif');
     }
   };
 
-  // Simulation mise à jour position
-  useEffect(() => {
-    const interval = setInterval(() => {
-      navigator.geolocation?.getCurrentPosition(
+  const initializeNativeSensors = async () => {
+    // Vérifier et demander les permissions de géolocalisation
+    const permissions = await Geolocation.checkPermissions();
+    if (permissions.location !== 'granted') {
+      const request = await Geolocation.requestPermissions();
+      if (request.location !== 'granted') {
+        setError('Permissions de géolocalisation requises pour utiliser la navigation');
+        return;
+      }
+    }
+
+    setPermissionGranted(true);
+    
+    // Démarrer la géolocalisation native
+    await startNativeGeolocation();
+    
+    // Démarrer le gyroscope/boussole natif
+    await startNativeCompass();
+  };
+
+  const initializeWebSensors = async () => {
+    console.log('Initialisation des capteurs web...');
+    
+    // Vérifier si la géolocalisation est disponible
+    if (!navigator.geolocation) {
+      setError('Géolocalisation non supportée par ce navigateur');
+      return;
+    }
+
+    setPermissionGranted(true);
+    
+    // Démarrer la géolocalisation web
+    await startWebGeolocation();
+    
+    // Démarrer la boussole web
+    await startWebCompass();
+  };
+
+  const startNativeGeolocation = async () => {
+    try {
+      // Position initiale
+      const position = await Geolocation.getCurrentPosition();
+      const userPos = {
+        lat: position.coords.latitude,
+        lon: position.coords.longitude
+      };
+      setUserPosition(userPos);
+      calculateDistanceAndDirection(userPos);
+
+      // Surveiller les changements de position
+      const watchId = Geolocation.watchPosition(
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 3600
+        },
         (position) => {
-          setUserPosition({
+          const newPos = {
             lat: position.coords.latitude,
             lon: position.coords.longitude
-          });
-        },
-        () => {
-          // Simulation de mouvement vers le portail si géolocalisation indisponible
-          if (targetPortal && distance > 10) {
-            const newLat = userPosition.lat + (targetPortal.lat - userPosition.lat) * 0.1;
-            const newLon = userPosition.lon + (targetPortal.lon - userPosition.lon) * 0.1;
-            setUserPosition({ lat: newLat, lon: newLon });
-          }
+          };
+          setUserPosition(newPos);
+          calculateDistanceAndDirection(newPos);
         }
       );
-    }, 3000);
 
-    return () => clearInterval(interval);
-  }, [userPosition, targetPortal, distance]);
+    } catch (error) {
+      console.error('Erreur de géolocalisation native:', error);
+      setError('Impossible d\'accéder à la géolocalisation');
+    }
+  };
 
-  if (!targetPortal) {
+  const startWebGeolocation = async () => {
+    try {
+      console.log('Démarrage de la géolocalisation web...');
+      
+      // Position initiale
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('Position initiale obtenue:', position);
+          const userPos = {
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          };
+          setUserPosition(userPos);
+          calculateDistanceAndDirection(userPos);
+        },
+        (error) => {
+          console.error('Erreur de géolocalisation initiale:', error);
+          setError('Impossible d\'accéder à la géolocalisation');
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        }
+      );
+
+      // Surveiller les changements de position en continu
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          console.log('Position mise à jour:', position);
+          const newPos = {
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          };
+          setUserPosition(newPos);
+          calculateDistanceAndDirection(newPos);
+        },
+        (error) => {
+          console.error('Erreur de surveillance géolocalisation:', error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 5000 // Actualiser au maximum toutes les 5 secondes
+        }
+      );
+
+      setWatchId(watchId);
+
+    } catch (error) {
+      console.error('Erreur de géolocalisation web:', error);
+      setError('Impossible d\'accéder à la géolocalisation');
+    }
+  };
+
+  const startNativeCompass = async () => {
+    try {
+      // Démarrer l'écoute de l'orientation du dispositif
+      await Motion.addListener('orientation', (event) => {
+        if (event.alpha !== null) {
+          // Alpha représente la rotation autour de l'axe Z (boussole)
+          setCompass(Math.round(event.alpha));
+        }
+      });
+    } catch (error) {
+      console.error('Erreur du gyroscope natif:', error);
+      setError('Impossible d\'accéder au gyroscope');
+    }
+  };
+
+  const startWebCompass = async () => {
+    try {
+      console.log('Démarrage de la boussole web...');
+      
+      // Vérifier si l'orientation est supportée
+      if (window.DeviceOrientationEvent) {
+        // Demander les permissions pour iOS 13+
+        if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+          const permission = await (DeviceOrientationEvent as any).requestPermission();
+          if (permission !== 'granted') {
+            console.log('Permission d\'orientation refusée');
+            return;
+          }
+        }
+
+        window.addEventListener('deviceorientation', (event) => {
+          if (event.alpha !== null) {
+            setCompass(Math.round(event.alpha));
+          }
+        });
+        
+        console.log('Écoute de l\'orientation activée');
+      } else {
+        console.log('DeviceOrientationEvent non supporté');
+      }
+    } catch (error) {
+      console.error('Erreur de la boussole web:', error);
+    }
+  };
+
+  const calculateDistanceAndDirection = (userPos: {lat: number, lon: number}) => {
+    console.log('Calcul distance et direction:', userPos, 'vers', targetPosition);
+    
+    // Calculer la distance en utilisant la formule de Haversine
+    const R = 6371e3; // Rayon de la Terre en mètres
+    const φ1 = userPos.lat * Math.PI/180;
+    const φ2 = targetPosition.lat * Math.PI/180;
+    const Δφ = (targetPosition.lat - userPos.lat) * Math.PI/180;
+    const Δλ = (targetPosition.lon - userPos.lon) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    const calculatedDistance = R * c;
+    console.log('Distance calculée:', calculatedDistance);
+    setDistance(calculatedDistance);
+
+    // Calculer la direction absolue (bearing) vers le portail
+    const y = Math.sin(Δλ) * Math.cos(φ2);
+    const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+    const θ = Math.atan2(y, x);
+    const bearing = (θ * 180/Math.PI + 360) % 360;
+
+    console.log('Direction absolue calculée:', bearing, 'vers', targetName);
+    setTargetBearing(bearing);
+
+    // Mettre à jour la température selon la distance (distances ajustées pour Croix)
+    if (calculatedDistance < 20) setTemperature('hot');
+    else if (calculatedDistance < 100) setTemperature('warm');
+    else setTemperature('cold');
+
+    // Calculer la direction relative immédiatement
+    updateRelativeDirection(bearing);
+  };
+
+  const updateRelativeDirection = (bearing?: number) => {
+    const targetBear = bearing !== undefined ? bearing : targetBearing;
+    
+    // Calculer la différence entre la direction du portail et l'orientation de l'appareil
+    let relativeBearing = targetBear - compass;
+    
+    // Normaliser l'angle entre -180 et 180
+    if (relativeBearing > 180) relativeBearing -= 360;
+    if (relativeBearing < -180) relativeBearing += 360;
+
+    console.log('Direction relative:', relativeBearing, 'compass:', compass, 'target:', targetBear);
+
+    // Convertir en direction relative à l'appareil (8 directions, tous les 45°)
+    if (relativeBearing >= -22.5 && relativeBearing < 22.5) {
+      setDirection('north'); // Le portail est devant nous
+    } else if (relativeBearing >= 22.5 && relativeBearing < 67.5) {
+      setDirection('northwest'); // Devant-gauche
+    } else if (relativeBearing >= 67.5 && relativeBearing < 112.5) {
+      setDirection('west'); // À gauche
+    } else if (relativeBearing >= 112.5 && relativeBearing < 157.5) {
+      setDirection('southwest'); // Derrière-gauche
+    } else if (relativeBearing >= 157.5 || relativeBearing < -157.5) {
+      setDirection('south'); // Le portail est derrière nous
+    } else if (relativeBearing >= -157.5 && relativeBearing < -112.5) {
+      setDirection('southeast'); // Derrière-droite
+    } else if (relativeBearing >= -112.5 && relativeBearing < -67.5) {
+      setDirection('east'); // À droite
+    } else {
+      setDirection('northeast'); // Devant-droite
+    }
+  };
+
+  const getTemperatureMessage = () => {
+    switch (temperature) {
+      case 'hot': return { text: "🔥 Tu brûles ! Tout proche !", color: "text-red-600", bg: "bg-red-100" };
+      case 'warm': return { text: "😊 Tu chauffes ! Continue !", color: "text-orange-600", bg: "bg-orange-100" };
+      case 'cold': return { text: "❄️ Tu refroidis... Cherche ailleurs !", color: "text-blue-600", bg: "bg-blue-100" };
+    }
+  };
+
+  const getDirectionArrow = () => {
+    switch (direction) {
+      case 'north': return <ArrowUp className="h-12 w-12" />;
+      case 'northeast': return <ArrowUpRight className="h-12 w-12" />;
+      case 'east': return <ArrowRight className="h-12 w-12" />;
+      case 'southeast': return <ArrowDownRight className="h-12 w-12" />;
+      case 'south': return <ArrowDown className="h-12 w-12" />;
+      case 'southwest': return <ArrowDownLeft className="h-12 w-12" />;
+      case 'west': return <ArrowLeft className="h-12 w-12" />;
+      case 'northwest': return <ArrowUpLeft className="h-12 w-12" />;
+    }
+  };
+
+  const getDirectionText = () => {
+    switch (direction) {
+      case 'north': return "Continue tout droit 🧭";
+      case 'northeast': return "Léger virage à droite 🧭";
+      case 'east': return "Tourne à droite 🧭";
+      case 'southeast': return "Tourne à droite et recule 🧭";
+      case 'south': return "Fais demi-tour 🧭";
+      case 'southwest': return "Tourne à gauche et recule 🧭";
+      case 'west': return "Tourne à gauche 🧭";
+      case 'northwest': return "Léger virage à gauche 🧭";
+    }
+  };
+
+  if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-100 to-pink-100 p-4 flex items-center justify-center">
-        <Card className="max-w-md mx-auto bg-white/90 backdrop-blur-sm shadow-lg">
-          <CardContent className="p-6 text-center">
-            <h1 className="text-2xl font-bold text-red-800 mb-4">Portail introuvable</h1>
-            <Button onClick={() => navigate('/map')} className="w-full">
-              Retour à la carte
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-50 to-green-100 p-4">
-      <div className="max-w-md mx-auto">
-        {showAnimation && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="text-center animate-pulse">
-              <div className="text-8xl mb-4">🎉✨</div>
-              <h2 className="text-4xl font-bold text-white mb-4">
-                PORTAIL DÉCOUVERT !
-              </h2>
-              <div className="text-6xl animate-bounce">🏆</div>
-            </div>
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 p-4">
+        <div className="max-w-md mx-auto">
+          <div className="text-center mb-6 pt-6">
+            <div className="text-5xl mb-3">⚠️</div>
+            <h1 className="text-3xl font-bold text-red-800 mb-2">
+              Erreur
+            </h1>
+            <p className="text-red-600">{error}</p>
           </div>
-        )}
-
-        {/* Header */}
-        <div className="text-center mb-6 pt-6">
-          <div className="text-5xl mb-3">🧭✨</div>
-          <h1 className="text-3xl font-bold text-purple-800 mb-2">
-            Navigation Active
-          </h1>
-          <Badge className="bg-blue-200 text-blue-800 font-bold px-4 py-2">
-            🎯 Destination: {targetPortal.name}
-          </Badge>
-        </div>
-
-        {/* Compass Card */}
-        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-purple-200">
-          <CardContent className="p-6">
-            <div className="text-center mb-6">
-              <div className="relative w-32 h-32 mx-auto mb-4">
-                <div className="absolute inset-0 rounded-full border-4 border-purple-300 bg-gradient-to-br from-purple-100 to-blue-100"></div>
-                <div 
-                  className="absolute inset-4 flex items-center justify-center"
-                  style={{ transform: `rotate(${bearing}deg)` }}
-                >
-                  <ArrowUp className="w-8 h-8 text-purple-600" />
-                </div>
-                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 text-xs font-bold text-purple-800">N</div>
-              </div>
-              
-              <div className="space-y-2">
-                <p className="text-2xl font-bold text-purple-800">
-                  {Math.round(distance)}m
-                </p>
-                <p className="text-purple-600">
-                  Distance jusqu'au portail
-                </p>
-                <div className="flex items-center justify-center space-x-2">
-                  <Compass className="w-4 h-4 text-purple-600" />
-                  <span className="text-sm text-purple-600">
-                    Direction: {Math.round(bearing)}°
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="mb-4">
-              <div className="bg-gray-200 rounded-full h-3">
-                <div 
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all duration-1000"
-                  style={{ width: `${Math.max(10, 100 - (distance / 5))}%` }}
-                ></div>
-              </div>
-              <p className="text-xs text-purple-600 mt-2 text-center">
-                Plus tu te rapproches, plus la barre se remplit !
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Portal Info */}
-        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg">
-          <CardContent className="p-4">
-            <div className="flex items-center mb-3">
-              <MapPin className="w-5 h-5 text-purple-600 mr-2" />
-              <h3 className="text-lg font-bold text-purple-800">
-                {targetPortal.name}
-              </h3>
-            </div>
-            <p className="text-purple-600 mb-4">{targetPortal.hint}</p>
-            
-            <div className={`p-3 rounded-lg border-2 ${
-              distance <= 50 
-                ? 'bg-green-100 border-green-300' 
-                : 'bg-yellow-100 border-yellow-300'
-            }`}>
-              <p className={`font-bold text-center ${
-                distance <= 50 ? 'text-green-800' : 'text-yellow-800'
-              }`}>
-                {distance <= 50 
-                  ? '✅ À portée ! Tu peux scanner le portail' 
-                  : '🚶‍♂️ Continue à te rapprocher'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="space-y-4">
-          <Button 
-            onClick={handleScan}
-            disabled={distance > 50 || isScanning}
-            className={`w-full font-bold py-4 rounded-full text-lg shadow-lg transform transition-all duration-200 ${
-              distance <= 50 
-                ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:scale-105' 
-                : 'bg-gray-400 cursor-not-allowed'
-            }`}
-          >
-            {isScanning ? '🔍 Scan en cours...' : '📱 Scanner le Portail'}
-          </Button>
           
+          <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-red-200">
+            <CardContent className="p-6 text-center">
+              <p className="text-red-700 mb-4">
+                {isNative 
+                  ? "Pour utiliser la navigation, vous devez activer les permissions de géolocalisation et de mouvement."
+                  : "Assurez-vous d'autoriser l'accès à la géolocalisation dans votre navigateur."
+                }
+              </p>
+              <Button 
+                onClick={initializeSensors}
+                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-4 rounded-full text-lg"
+              >
+                🔄 Réessayer
+              </Button>
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-2 gap-4">
             <Button
-              onClick={() => navigate('/map')}
+              onClick={() => navigate('/mission')}
               variant="outline"
-              className="bg-white/80 backdrop-blur-sm border-2 border-purple-300 hover:bg-purple-50 text-purple-700 font-bold py-3 rounded-2xl"
+              className="bg-white/80 backdrop-blur-sm border-2 border-gray-300 hover:bg-gray-50 font-bold py-3 rounded-2xl"
             >
-              🗺️ Carte
+              ← Retour Mission
             </Button>
             
             <Button
               onClick={() => navigate('/')}
               variant="outline"
-              className="bg-white/80 backdrop-blur-sm border-2 border-gray-300 hover:bg-gray-50 font-bold py-3 rounded-2xl"
+              className="bg-white/80 backdrop-blur-sm border-2 border-blue-300 hover:bg-blue-50 text-blue-700 font-bold py-3 rounded-2xl"
             >
               🏠 Accueil
             </Button>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        {/* Decorative elements */}
-        <div className="fixed top-10 left-10 text-3xl animate-spin">🧭</div>
-        <div className="fixed top-20 right-8 text-2xl animate-bounce">📍</div>
-        <div className="fixed bottom-32 left-6 text-2xl animate-pulse">✨</div>
+  if (!permissionGranted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 p-4">
+        <div className="max-w-md mx-auto">
+          <div className="text-center mb-6 pt-6">
+            <div className="text-5xl mb-3">🧭✨</div>
+            <h1 className="text-3xl font-bold text-purple-800 mb-2">
+              Navigation Magique
+            </h1>
+            <p className="text-purple-600">Activation des capteurs en cours...</p>
+          </div>
+          
+          <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-purple-200">
+            <CardContent className="p-6 text-center">
+              <div className="animate-spin text-4xl mb-4">🔄</div>
+              <p className="text-purple-700">
+                {isNative ? "Demande d'accès aux capteurs..." : "Demande d'accès à la géolocalisation..."}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 p-4">
+      <div className="max-w-md mx-auto">
+        {/* Header */}
+        <div className="text-center mb-6 pt-6">
+          <div className="text-5xl mb-3">🧭✨</div>
+          <h1 className="text-3xl font-bold text-purple-800 mb-2">
+            Navigation Magique
+          </h1>
+          <p className="text-purple-600">Suis les flèches pour trouver le portail !</p>
+          <p className="text-purple-500 text-sm">
+            Mode: {isNative ? 'Natif' : 'Web'} • Suivi GPS continu
+          </p>
+        </div>
+
+        {/* Destination */}
+        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-indigo-200">
+          <CardContent className="p-6 text-center">
+            <div className="text-4xl mb-3">🎯</div>
+            <p className="text-indigo-800 font-bold text-lg mb-2">
+              Destination actuelle
+            </p>
+            <p className="text-indigo-600 text-xl font-semibold">
+              📍 {targetName}
+            </p>
+            <Button
+              onClick={() => navigate('/map')}
+              variant="outline"
+              className="mt-3 bg-indigo-100 border-indigo-300 text-indigo-700 hover:bg-indigo-200"
+            >
+              📍 Changer de destination
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Boussole */}
+        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-purple-200">
+          <CardContent className="p-8 text-center">
+            <div className="relative mb-4">
+              <div 
+                className="w-32 h-32 mx-auto rounded-full border-4 border-purple-300 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center transition-transform duration-200"
+                style={{ transform: `rotate(${compass}deg)` }}
+              >
+                <div className="text-4xl">🧭</div>
+              </div>
+              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 text-red-600 font-bold">
+                N
+              </div>
+            </div>
+            <p className="text-purple-800 font-bold text-lg mb-2">
+              Boussole GPS
+            </p>
+            <p className="text-purple-600">Orientation : {compass}°</p>
+          </CardContent>
+        </Card>
+
+        {/* Direction */}
+        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-green-200">
+          <CardContent className="p-8 text-center">
+            <div className="text-green-600 mb-4">
+              {getDirectionArrow()}
+            </div>
+            <p className="text-green-800 font-bold text-xl mb-2">
+              {getDirectionText()}
+            </p>
+            <p className="text-green-600">
+              Distance estimée : {distance < 1000 ? `${Math.round(distance)}m` : `${(distance/1000).toFixed(1)}km`}
+            </p>
+            {userPosition && (
+              <p className="text-green-500 text-sm mt-2">
+                📍 Position GPS: {userPosition.lat.toFixed(4)}, {userPosition.lon.toFixed(4)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Temperature Status */}
+        <Card className={`mb-6 ${getTemperatureMessage().bg} border-2 shadow-lg`}>
+          <CardContent className="p-6 text-center">
+            <div className="text-4xl mb-3">
+              {temperature === 'hot' ? '🔥' : temperature === 'warm' ? '😊' : '❄️'}
+            </div>
+            <p className={`${getTemperatureMessage().color} font-bold text-lg`}>
+              {getTemperatureMessage().text}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Scanner Button */}
+        {temperature === 'hot' && (
+          <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg">
+            <CardContent className="p-6 text-center">
+              <div className="text-5xl mb-4 animate-bounce">✨🔍✨</div>
+              <Button 
+                onClick={() => navigate('/portal/1')}
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-4 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all duration-200"
+              >
+                🔮 Scanner le portail maintenant !
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Navigation */}
+        <div className="grid grid-cols-2 gap-4">
+          <Button
+            onClick={() => navigate('/mission')}
+            variant="outline"
+            className="bg-white/80 backdrop-blur-sm border-2 border-gray-300 hover:bg-gray-50 font-bold py-3 rounded-2xl"
+          >
+            ← Retour Mission
+          </Button>
+          
+          <Button
+            onClick={() => navigate('/')}
+            variant="outline"
+            className="bg-white/80 backdrop-blur-sm border-2 border-blue-300 hover:bg-blue-50 text-blue-700 font-bold py-3 rounded-2xl"
+          >
+            🏠 Accueil
+          </Button>
+        </div>
       </div>
     </div>
   );
