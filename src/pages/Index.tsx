@@ -8,34 +8,34 @@ const Index = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-yellow-50 to-blue-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <div className="max-w-md mx-auto">
         {/* Header avec titre */}
         <div className="text-center mb-8 pt-8">
-          <div className="text-6xl mb-4">🏰✨</div>
-          <h1 className="text-4xl font-bold text-purple-800 mb-2">
+          <div className="text-4xl mb-4 text-slate-600">🏰</div>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">
             Chasse aux Portails
           </h1>
-          <p className="text-lg text-purple-600">
-            Trouve les portails magiques cachés dans ta ville !
+          <p className="text-lg text-slate-600">
+            Découvre les portails cachés dans ta ville
           </p>
         </div>
 
         {/* Carte principale */}
-        <Card className="mb-6 bg-white/80 backdrop-blur-sm shadow-lg border-2 border-purple-200">
+        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-md border border-slate-200">
           <CardContent className="p-6 text-center">
-            <div className="text-5xl mb-4">🗺️🔍</div>
-            <h2 className="text-2xl font-bold text-purple-800 mb-4">
+            <div className="text-4xl mb-4 text-slate-600">🗺️</div>
+            <h2 className="text-xl font-semibold text-slate-800 mb-4">
               Prêt pour l'aventure ?
             </h2>
-            <p className="text-purple-600 mb-6">
-              Utilise ton téléphone pour découvrir des portails magiques cachés autour de toi !
+            <p className="text-slate-600 mb-6">
+              Utilise ton téléphone pour découvrir des portails cachés autour de toi
             </p>
             <Button 
               onClick={() => navigate('/mission')}
-              className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all duration-200"
+              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 px-6 rounded-lg text-base shadow-sm hover:shadow-md transition-all duration-200"
             >
-              🚀 Commencer la quête
+              Commencer la quête
             </Button>
           </CardContent>
         </Card>
@@ -45,26 +45,21 @@ const Index = () => {
           <Button
             onClick={() => navigate('/profile')}
             variant="outline"
-            className="bg-white/80 backdrop-blur-sm border-2 border-green-300 hover:bg-green-50 text-green-700 font-bold py-4 rounded-2xl shadow-md"
+            className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium py-3 rounded-lg shadow-sm"
           >
-            <Badge className="mr-2 h-5 w-5" />
+            <Badge className="mr-2 h-4 w-4" />
             Mes Récompenses
           </Button>
           
           <Button
             onClick={() => navigate('/map')}
             variant="outline"
-            className="bg-white/80 backdrop-blur-sm border-2 border-blue-300 hover:bg-blue-50 text-blue-700 font-bold py-4 rounded-2xl shadow-md"
+            className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium py-3 rounded-lg shadow-sm"
           >
-            <MapPin className="mr-2 h-5 w-5" />
-            Carte Magique
+            <MapPin className="mr-2 h-4 w-4" />
+            Carte
           </Button>
         </div>
-
-        {/* Éléments décoratifs */}
-        <div className="fixed top-10 left-10 text-4xl animate-bounce">⭐</div>
-        <div className="fixed top-32 right-8 text-3xl animate-pulse">🌟</div>
-        <div className="fixed bottom-20 left-6 text-2xl animate-bounce">✨</div>
       </div>
     </div>
   );
