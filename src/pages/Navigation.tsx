@@ -332,9 +332,9 @@ const Navigation = () => {
 
   const getTemperatureMessage = () => {
     switch (temperature) {
-      case 'hot': return { text: "🔥 Tu brûles ! Tout proche !", color: "text-red-600", bg: "bg-red-100" };
-      case 'warm': return { text: "😊 Tu chauffes ! Continue !", color: "text-orange-600", bg: "bg-orange-100" };
-      case 'cold': return { text: "❄️ Tu refroidis... Cherche ailleurs !", color: "text-blue-600", bg: "bg-blue-100" };
+      case 'hot': return { text: "🔥 Tu brûles ! Tout proche !", color: "text-red-600", bg: "bg-red-50" };
+      case 'warm': return { text: "😊 Tu chauffes ! Continue !", color: "text-orange-600", bg: "bg-orange-50" };
+      case 'cold': return { text: "❄️ Tu refroidis... Cherche ailleurs !", color: "text-blue-600", bg: "bg-blue-50" };
     }
   };
 
@@ -366,19 +366,19 @@ const Navigation = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-6 pt-6">
             <div className="text-5xl mb-3">⚠️</div>
-            <h1 className="text-3xl font-bold text-red-800 mb-2">
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">
               Erreur
             </h1>
-            <p className="text-red-600">{error}</p>
+            <p className="text-slate-600">{error}</p>
           </div>
           
-          <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-red-200">
+          <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-md border border-slate-200">
             <CardContent className="p-6 text-center">
-              <p className="text-red-700 mb-4">
+              <p className="text-slate-700 mb-4">
                 {isNative 
                   ? "Pour utiliser la navigation, vous devez activer les permissions de géolocalisation et de mouvement."
                   : "Assurez-vous d'autoriser l'accès à la géolocalisation dans votre navigateur."
@@ -386,7 +386,7 @@ const Navigation = () => {
               </p>
               <Button 
                 onClick={initializeSensors}
-                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-4 rounded-full text-lg"
+                className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-4 px-6 rounded-lg"
               >
                 🔄 Réessayer
               </Button>
@@ -397,7 +397,7 @@ const Navigation = () => {
             <Button
               onClick={() => navigate('/mission')}
               variant="outline"
-              className="bg-white/80 backdrop-blur-sm border-2 border-gray-300 hover:bg-gray-50 font-bold py-3 rounded-2xl"
+              className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium py-3 rounded-lg"
             >
               ← Retour Mission
             </Button>
@@ -405,7 +405,7 @@ const Navigation = () => {
             <Button
               onClick={() => navigate('/')}
               variant="outline"
-              className="bg-white/80 backdrop-blur-sm border-2 border-blue-300 hover:bg-blue-50 text-blue-700 font-bold py-3 rounded-2xl"
+              className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium py-3 rounded-lg"
             >
               🏠 Accueil
             </Button>
@@ -417,20 +417,20 @@ const Navigation = () => {
 
   if (!permissionGranted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-6 pt-6">
-            <div className="text-5xl mb-3">🧭✨</div>
-            <h1 className="text-3xl font-bold text-purple-800 mb-2">
-              Navigation Magique
+            <div className="text-5xl mb-3">🧭</div>
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">
+              Navigation
             </h1>
-            <p className="text-purple-600">Activation des capteurs en cours...</p>
+            <p className="text-slate-600">Activation des capteurs en cours...</p>
           </div>
           
-          <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-purple-200">
+          <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-md border border-slate-200">
             <CardContent className="p-6 text-center">
               <div className="animate-spin text-4xl mb-4">🔄</div>
-              <p className="text-purple-700">
+              <p className="text-slate-700">
                 {isNative ? "Demande d'accès aux capteurs..." : "Demande d'accès à la géolocalisation..."}
               </p>
             </CardContent>
@@ -441,34 +441,34 @@ const Navigation = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="text-center mb-6 pt-6">
-          <div className="text-5xl mb-3">🧭✨</div>
-          <h1 className="text-3xl font-bold text-purple-800 mb-2">
-            Navigation Magique
+          <div className="text-5xl mb-3">🧭</div>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">
+            Navigation
           </h1>
-          <p className="text-purple-600">Suis les flèches pour trouver le portail !</p>
-          <p className="text-purple-500 text-sm">
+          <p className="text-slate-600">Suis les flèches pour trouver le portail !</p>
+          <p className="text-slate-500 text-sm">
             Mode: {isNative ? 'Natif' : 'Web'} • Suivi GPS continu
           </p>
         </div>
 
         {/* Destination */}
-        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-indigo-200">
+        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-md border border-slate-200">
           <CardContent className="p-6 text-center">
             <div className="text-4xl mb-3">🎯</div>
-            <p className="text-indigo-800 font-bold text-lg mb-2">
+            <p className="text-slate-800 font-medium text-lg mb-2">
               Destination actuelle
             </p>
-            <p className="text-indigo-600 text-xl font-semibold">
+            <p className="text-slate-600 text-xl font-medium">
               📍 {targetName}
             </p>
             <Button
               onClick={() => navigate('/map')}
               variant="outline"
-              className="mt-3 bg-indigo-100 border-indigo-300 text-indigo-700 hover:bg-indigo-200"
+              className="mt-3 bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100"
             >
               📍 Changer de destination
             </Button>
@@ -476,11 +476,11 @@ const Navigation = () => {
         </Card>
 
         {/* Boussole */}
-        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-purple-200">
+        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-md border border-slate-200">
           <CardContent className="p-8 text-center">
             <div className="relative mb-4">
               <div 
-                className="w-32 h-32 mx-auto rounded-full border-4 border-purple-300 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center transition-transform duration-200"
+                className="w-32 h-32 mx-auto rounded-full border-4 border-slate-300 bg-slate-50 flex items-center justify-center transition-transform duration-200"
                 style={{ transform: `rotate(${compass}deg)` }}
               >
                 <div className="text-4xl">🧭</div>
@@ -489,27 +489,27 @@ const Navigation = () => {
                 N
               </div>
             </div>
-            <p className="text-purple-800 font-bold text-lg mb-2">
+            <p className="text-slate-800 font-medium text-lg mb-2">
               Boussole GPS
             </p>
-            <p className="text-purple-600">Orientation : {compass}°</p>
+            <p className="text-slate-600">Orientation : {compass}°</p>
           </CardContent>
         </Card>
 
         {/* Direction */}
-        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-green-200">
+        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-md border border-slate-200">
           <CardContent className="p-8 text-center">
-            <div className="text-green-600 mb-4">
+            <div className="text-slate-600 mb-4">
               {getDirectionArrow()}
             </div>
-            <p className="text-green-800 font-bold text-xl mb-2">
+            <p className="text-slate-800 font-medium text-xl mb-2">
               {getDirectionText()}
             </p>
-            <p className="text-green-600">
+            <p className="text-slate-600">
               Distance estimée : {distance < 1000 ? `${Math.round(distance)}m` : `${(distance/1000).toFixed(1)}km`}
             </p>
             {userPosition && (
-              <p className="text-green-500 text-sm mt-2">
+              <p className="text-slate-500 text-sm mt-2">
                 📍 Position GPS: {userPosition.lat.toFixed(4)}, {userPosition.lon.toFixed(4)}
               </p>
             )}
@@ -517,12 +517,12 @@ const Navigation = () => {
         </Card>
 
         {/* Temperature Status */}
-        <Card className={`mb-6 ${getTemperatureMessage().bg} border-2 shadow-lg`}>
+        <Card className={`mb-6 ${getTemperatureMessage().bg} border border-slate-200 shadow-md`}>
           <CardContent className="p-6 text-center">
             <div className="text-4xl mb-3">
               {temperature === 'hot' ? '🔥' : temperature === 'warm' ? '😊' : '❄️'}
             </div>
-            <p className={`${getTemperatureMessage().color} font-bold text-lg`}>
+            <p className={`${getTemperatureMessage().color} font-medium text-lg`}>
               {getTemperatureMessage().text}
             </p>
           </CardContent>
@@ -530,12 +530,12 @@ const Navigation = () => {
 
         {/* Scanner Button */}
         {temperature === 'hot' && (
-          <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg">
+          <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-md border border-slate-200">
             <CardContent className="p-6 text-center">
-              <div className="text-5xl mb-4 animate-bounce">✨🔍✨</div>
+              <div className="text-5xl mb-4 animate-bounce">🔍</div>
               <Button 
                 onClick={() => navigate('/portal/1')}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-4 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all duration-200"
+                className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-4 px-6 rounded-lg"
               >
                 🔮 Scanner le portail maintenant !
               </Button>
@@ -548,7 +548,7 @@ const Navigation = () => {
           <Button
             onClick={() => navigate('/mission')}
             variant="outline"
-            className="bg-white/80 backdrop-blur-sm border-2 border-gray-300 hover:bg-gray-50 font-bold py-3 rounded-2xl"
+            className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium py-3 rounded-lg"
           >
             ← Retour Mission
           </Button>
@@ -556,7 +556,7 @@ const Navigation = () => {
           <Button
             onClick={() => navigate('/')}
             variant="outline"
-            className="bg-white/80 backdrop-blur-sm border-2 border-blue-300 hover:bg-blue-50 text-blue-700 font-bold py-3 rounded-2xl"
+            className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium py-3 rounded-lg"
           >
             🏠 Accueil
           </Button>
