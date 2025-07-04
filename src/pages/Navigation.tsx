@@ -6,13 +6,10 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Motion } from '@capacitor/motion';
 import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
-import { usePortals } from "@/contexts/PortalContext";
 
 const Navigation = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { portals } = usePortals();
-  
   const [distance, setDistance] = useState<number>(150);
   const [temperature, setTemperature] = useState<'cold' | 'warm' | 'hot'>('cold');
   const [direction, setDirection] = useState<'north' | 'northeast' | 'east' | 'southeast' | 'south' | 'southwest' | 'west' | 'northwest'>('north');
@@ -22,33 +19,51 @@ const Navigation = () => {
   const [error, setError] = useState<string | null>(null);
   const [isNative, setIsNative] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
-  const [targetBearing, setTargetBearing] = useState(0);
+  const [targetBearing, setTargetBearing] = useState(0); // Direction absolue vers le portail
 
+  // Portails avec coordonnées GPS précises de Croix
+  const portals = [
+    { id: 1, name: "Place Jean Jaurès", lat: 50.67648, lon: 3.15159 },
+    { id: 2, name: "Parc Barbieux", lat: 50.67204, lon: 3.14502 },
+    { id: 3, name: "Église Saint-Martin", lat: 50.67801, lon: 3.15298 },
+    { id: 4, name: "Mairie de Croix", lat: 50.67502, lon: 3.15001 },
+    { id: 5, name: "Stade Amédée Prouvost", lat: 50.68001, lon: 3.15798 },
+    { id: 6, name: "Decathlon", lat: 50.67289594117399, lon: 3.148318881734259 },
+  ];
+
+  // Déterminer le portail cible basé sur l'URL
   const targetId = searchParams.get('target') ? parseInt(searchParams.get('target')!) : 1;
   const targetPortal = portals.find(p => p.id === targetId) || portals[0];
   const targetPosition = { lat: targetPortal.lat, lon: targetPortal.lon };
   const targetName = targetPortal.name;
 
   useEffect(() => {
+    // Vérifier si on est sur une plateforme native
     setIsNative(Capacitor.isNativePlatform());
+    
+    // Demander les permissions et initialiser les capteurs
     initializeSensors();
 
     return () => {
+      // Nettoyer les listeners
       if (isNative) {
         Motion.removeAllListeners();
       }
+      // Arrêter le suivi de position
       if (watchId !== null) {
         navigator.geolocation.clearWatch(watchId);
       }
     };
   }, []);
 
+  // Recalculer la direction relative quand la boussole change
   useEffect(() => {
     if (userPosition) {
       updateRelativeDirection();
     }
   }, [compass, targetBearing]);
 
+  // Recalculer la position et direction quand le portail cible change
   useEffect(() => {
     if (userPosition) {
       console.log('Destination changée, recalcul de la direction vers:', targetName);
@@ -61,8 +76,10 @@ const Navigation = () => {
       console.log('Initialisation des capteurs, plateforme native:', Capacitor.isNativePlatform());
       
       if (Capacitor.isNativePlatform()) {
+        // Mode natif - utiliser les capteurs Capacitor
         await initializeNativeSensors();
       } else {
+        // Mode web - utiliser les APIs standard du navigateur
         await initializeWebSensors();
       }
       
@@ -73,6 +90,7 @@ const Navigation = () => {
   };
 
   const initializeNativeSensors = async () => {
+    // Vérifier et demander les permissions de géolocalisation
     const permissions = await Geolocation.checkPermissions();
     if (permissions.location !== 'granted') {
       const request = await Geolocation.requestPermissions();
@@ -83,25 +101,35 @@ const Navigation = () => {
     }
 
     setPermissionGranted(true);
+    
+    // Démarrer la géolocalisation native
     await startNativeGeolocation();
+    
+    // Démarrer le gyroscope/boussole natif
     await startNativeCompass();
   };
 
   const initializeWebSensors = async () => {
     console.log('Initialisation des capteurs web...');
     
+    // Vérifier si la géolocalisation est disponible
     if (!navigator.geolocation) {
       setError('Géolocalisation non supportée par ce navigateur');
       return;
     }
 
     setPermissionGranted(true);
+    
+    // Démarrer la géolocalisation web
     await startWebGeolocation();
+    
+    // Démarrer la boussole web
     await startWebCompass();
   };
 
   const startNativeGeolocation = async () => {
     try {
+      // Position initiale
       const position = await Geolocation.getCurrentPosition();
       const userPos = {
         lat: position.coords.latitude,
@@ -110,6 +138,7 @@ const Navigation = () => {
       setUserPosition(userPos);
       calculateDistanceAndDirection(userPos);
 
+      // Surveiller les changements de position
       const watchId = Geolocation.watchPosition(
         {
           enableHighAccuracy: true,
@@ -136,6 +165,7 @@ const Navigation = () => {
     try {
       console.log('Démarrage de la géolocalisation web...');
       
+      // Position initiale
       navigator.geolocation.getCurrentPosition(
         (position) => {
           console.log('Position initiale obtenue:', position);
@@ -157,6 +187,7 @@ const Navigation = () => {
         }
       );
 
+      // Surveiller les changements de position en continu
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
           console.log('Position mise à jour:', position);
@@ -173,7 +204,7 @@ const Navigation = () => {
         {
           enableHighAccuracy: true,
           timeout: 10000,
-          maximumAge: 5000
+          maximumAge: 5000 // Actualiser au maximum toutes les 5 secondes
         }
       );
 
@@ -187,8 +218,10 @@ const Navigation = () => {
 
   const startNativeCompass = async () => {
     try {
+      // Démarrer l'écoute de l'orientation du dispositif
       await Motion.addListener('orientation', (event) => {
         if (event.alpha !== null) {
+          // Alpha représente la rotation autour de l'axe Z (boussole)
           setCompass(Math.round(event.alpha));
         }
       });
@@ -202,7 +235,9 @@ const Navigation = () => {
     try {
       console.log('Démarrage de la boussole web...');
       
+      // Vérifier si l'orientation est supportée
       if (window.DeviceOrientationEvent) {
+        // Demander les permissions pour iOS 13+
         if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
           const permission = await (DeviceOrientationEvent as any).requestPermission();
           if (permission !== 'granted') {
@@ -229,7 +264,8 @@ const Navigation = () => {
   const calculateDistanceAndDirection = (userPos: {lat: number, lon: number}) => {
     console.log('Calcul distance et direction:', userPos, 'vers', targetPosition);
     
-    const R = 6371e3;
+    // Calculer la distance en utilisant la formule de Haversine
+    const R = 6371e3; // Rayon de la Terre en mètres
     const φ1 = userPos.lat * Math.PI/180;
     const φ2 = targetPosition.lat * Math.PI/180;
     const Δφ = (targetPosition.lat - userPos.lat) * Math.PI/180;
@@ -244,6 +280,7 @@ const Navigation = () => {
     console.log('Distance calculée:', calculatedDistance);
     setDistance(calculatedDistance);
 
+    // Calculer la direction absolue (bearing) vers le portail
     const y = Math.sin(Δλ) * Math.cos(φ2);
     const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
     const θ = Math.atan2(y, x);
@@ -252,39 +289,44 @@ const Navigation = () => {
     console.log('Direction absolue calculée:', bearing, 'vers', targetName);
     setTargetBearing(bearing);
 
+    // Mettre à jour la température selon la distance (distances ajustées pour Croix)
     if (calculatedDistance < 20) setTemperature('hot');
     else if (calculatedDistance < 100) setTemperature('warm');
     else setTemperature('cold');
 
+    // Calculer la direction relative immédiatement
     updateRelativeDirection(bearing);
   };
 
   const updateRelativeDirection = (bearing?: number) => {
     const targetBear = bearing !== undefined ? bearing : targetBearing;
     
+    // Calculer la différence entre la direction du portail et l'orientation de l'appareil
     let relativeBearing = targetBear - compass;
     
+    // Normaliser l'angle entre -180 et 180
     if (relativeBearing > 180) relativeBearing -= 360;
     if (relativeBearing < -180) relativeBearing += 360;
 
     console.log('Direction relative:', relativeBearing, 'compass:', compass, 'target:', targetBear);
 
+    // Convertir en direction relative à l'appareil (8 directions, tous les 45°)
     if (relativeBearing >= -22.5 && relativeBearing < 22.5) {
-      setDirection('north');
+      setDirection('north'); // Le portail est devant nous
     } else if (relativeBearing >= 22.5 && relativeBearing < 67.5) {
-      setDirection('northeast');
+      setDirection('northwest'); // Devant-gauche
     } else if (relativeBearing >= 67.5 && relativeBearing < 112.5) {
-      setDirection('east');
+      setDirection('west'); // À gauche
     } else if (relativeBearing >= 112.5 && relativeBearing < 157.5) {
-      setDirection('southeast');
+      setDirection('southwest'); // Derrière-gauche
     } else if (relativeBearing >= 157.5 || relativeBearing < -157.5) {
-      setDirection('south');
+      setDirection('south'); // Le portail est derrière nous
     } else if (relativeBearing >= -157.5 && relativeBearing < -112.5) {
-      setDirection('southwest');
+      setDirection('southeast'); // Derrière-droite
     } else if (relativeBearing >= -112.5 && relativeBearing < -67.5) {
-      setDirection('west');
+      setDirection('east'); // À droite
     } else {
-      setDirection('northwest');
+      setDirection('northeast'); // Devant-droite
     }
   };
 
@@ -401,6 +443,7 @@ const Navigation = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 p-4">
       <div className="max-w-md mx-auto">
+        {/* Header */}
         <div className="text-center mb-6 pt-6">
           <div className="text-5xl mb-3">🧭✨</div>
           <h1 className="text-3xl font-bold text-purple-800 mb-2">
@@ -412,6 +455,7 @@ const Navigation = () => {
           </p>
         </div>
 
+        {/* Destination */}
         <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-indigo-200">
           <CardContent className="p-6 text-center">
             <div className="text-4xl mb-3">🎯</div>
@@ -431,6 +475,7 @@ const Navigation = () => {
           </CardContent>
         </Card>
 
+        {/* Boussole */}
         <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-purple-200">
           <CardContent className="p-8 text-center">
             <div className="relative mb-4">
@@ -451,6 +496,7 @@ const Navigation = () => {
           </CardContent>
         </Card>
 
+        {/* Direction */}
         <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-green-200">
           <CardContent className="p-8 text-center">
             <div className="text-green-600 mb-4">
@@ -470,6 +516,7 @@ const Navigation = () => {
           </CardContent>
         </Card>
 
+        {/* Temperature Status */}
         <Card className={`mb-6 ${getTemperatureMessage().bg} border-2 shadow-lg`}>
           <CardContent className="p-6 text-center">
             <div className="text-4xl mb-3">
@@ -481,12 +528,13 @@ const Navigation = () => {
           </CardContent>
         </Card>
 
+        {/* Scanner Button */}
         {temperature === 'hot' && (
           <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg">
             <CardContent className="p-6 text-center">
               <div className="text-5xl mb-4 animate-bounce">✨🔍✨</div>
               <Button 
-                onClick={() => navigate(`/portal/${targetId}`)}
+                onClick={() => navigate('/portal/1')}
                 className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-4 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all duration-200"
               >
                 🔮 Scanner le portail maintenant !
@@ -495,6 +543,7 @@ const Navigation = () => {
           </Card>
         )}
 
+        {/* Navigation */}
         <div className="grid grid-cols-2 gap-4">
           <Button
             onClick={() => navigate('/mission')}

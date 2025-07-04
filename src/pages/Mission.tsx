@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin } from "lucide-react";
+import { ArrowDown, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Mission = () => {
@@ -42,9 +42,9 @@ const Mission = () => {
 
   const getTemperatureMessage = () => {
     switch (temperature) {
-      case 'hot': return { text: "🔥 Tu brûles ! Le portail est tout proche !", color: "text-red-600", bg: "bg-red-50" };
-      case 'warm': return { text: "😊 Tu chauffes ! Continue dans cette direction !", color: "text-orange-600", bg: "bg-orange-50" };
-      case 'cold': return { text: "❄️ Tu refroidis... Cherche ailleurs !", color: "text-blue-600", bg: "bg-blue-50" };
+      case 'hot': return { text: "🔥 Tu brûles ! Le portail est tout proche !", color: "text-red-600", bg: "bg-red-100" };
+      case 'warm': return { text: "😊 Tu chauffes ! Continue dans cette direction !", color: "text-orange-600", bg: "bg-orange-100" };
+      case 'cold': return { text: "❄️ Tu refroidis... Cherche ailleurs !", color: "text-blue-600", bg: "bg-blue-100" };
       default: return { text: "", color: "", bg: "" };
     }
   };
@@ -52,32 +52,33 @@ const Mission = () => {
   const canScanPortal = temperature === 'hot';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-secondary p-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-100 p-4">
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="text-center mb-6 pt-6">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+          <div className="text-5xl mb-3">🎯🔮</div>
+          <h1 className="text-3xl font-bold text-purple-800 mb-2">
             Mission Active
           </h1>
-          <Badge className="bg-primary/10 text-primary font-medium px-4 py-2">
+          <Badge className="bg-purple-200 text-purple-800 font-bold px-4 py-2">
             Portail 1/5
           </Badge>
         </div>
 
         {/* Mission Description */}
-        <Card className="mb-6 bg-card/95 backdrop-blur-sm shadow-lg border border-border">
+        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-purple-200">
           <CardHeader>
-            <CardTitle className="text-foreground text-xl">
-              Le Portail de la Bibliothèque
+            <CardTitle className="text-purple-800 text-xl">
+              🏰 Le Portail de la Bibliothèque
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-purple-600 mb-4">
               Un portail magique se cache près de la grande bibliothèque ! 
               Utilise ton détecteur de magie pour le trouver.
             </p>
-            <div className="bg-accent p-3 rounded-lg border border-border">
-              <p className="text-accent-foreground font-medium text-sm">
+            <div className="bg-yellow-100 p-3 rounded-lg border-2 border-yellow-300">
+              <p className="text-yellow-800 font-bold text-sm">
                 💡 Indice : Cherche près des grandes fenêtres !
               </p>
             </div>
@@ -86,36 +87,36 @@ const Mission = () => {
 
         {/* Location Status */}
         {!locationEnabled ? (
-          <Card className="mb-6 bg-card/95 backdrop-blur-sm shadow-lg border border-border">
+          <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg">
             <CardContent className="p-6 text-center">
               <div className="text-4xl mb-4">📍</div>
-              <h3 className="text-xl font-bold text-foreground mb-4">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">
                 Active ta localisation
               </h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-gray-600 mb-4">
                 Pour trouver les portails magiques, j'ai besoin de savoir où tu es !
               </p>
               <Button 
                 onClick={enableLocation}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-4 rounded-lg text-lg"
+                className="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-bold py-4 rounded-full text-lg"
               >
-                Activer la localisation
+                🎯 Activer la localisation
               </Button>
             </CardContent>
           </Card>
         ) : (
           <>
             {/* Temperature Indicator */}
-            <Card className={`mb-6 ${getTemperatureMessage().bg} border border-border shadow-lg`}>
+            <Card className={`mb-6 ${getTemperatureMessage().bg} border-2 shadow-lg`}>
               <CardContent className="p-6 text-center">
                 <div className="text-4xl mb-3">
                   {temperature === 'hot' ? '🔥' : temperature === 'warm' ? '😊' : '❄️'}
                 </div>
-                <p className={`${getTemperatureMessage().color} font-medium text-lg`}>
+                <p className={`${getTemperatureMessage().color} font-bold text-lg`}>
                   {getTemperatureMessage().text}
                 </p>
                 {distance && (
-                  <p className="text-muted-foreground mt-2">
+                  <p className="text-gray-600 mt-2">
                     Distance estimée : {Math.round(distance)}m
                   </p>
                 )}
@@ -123,25 +124,25 @@ const Mission = () => {
             </Card>
 
             {/* Portal Scanner */}
-            <Card className="mb-6 bg-card/95 backdrop-blur-sm shadow-lg border border-border">
+            <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg">
               <CardContent className="p-6 text-center">
-                <div className="text-5xl mb-4">🔍</div>
+                <div className="text-5xl mb-4">🔍✨</div>
                 <Button 
                   onClick={() => navigate('/navigation')}
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-4 rounded-lg text-lg mb-3"
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-4 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all duration-200 mb-3"
                 >
-                  Naviguer vers le portail
+                  🧭 Naviguer vers le portail
                 </Button>
                 {canScanPortal && (
                   <Button 
                     onClick={() => navigate('/portal/1')}
-                    className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-medium py-4 rounded-lg text-lg"
+                    className="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-bold py-4 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all duration-200"
                   >
-                    Scanner le portail maintenant !
+                    🔮 Scanner le portail maintenant !
                   </Button>
                 )}
                 {!canScanPortal && (
-                  <p className="text-muted-foreground text-sm mt-2">
+                  <p className="text-gray-500 text-sm mt-2">
                     Utilise la navigation pour te rapprocher !
                   </p>
                 )}
@@ -155,15 +156,15 @@ const Mission = () => {
           <Button
             onClick={() => navigate('/')}
             variant="outline"
-            className="bg-card/80 backdrop-blur-sm border-border hover:bg-accent text-foreground font-medium py-3 rounded-lg"
+            className="bg-white/80 backdrop-blur-sm border-2 border-gray-300 hover:bg-gray-50 font-bold py-3 rounded-2xl"
           >
-            Accueil
+            🏠 Accueil
           </Button>
           
           <Button
             onClick={() => navigate('/map')}
             variant="outline"
-            className="bg-card/80 backdrop-blur-sm border-border hover:bg-accent text-foreground font-medium py-3 rounded-lg"
+            className="bg-white/80 backdrop-blur-sm border-2 border-blue-300 hover:bg-blue-50 text-blue-700 font-bold py-3 rounded-2xl"
           >
             <MapPin className="mr-2 h-4 w-4" />
             Carte

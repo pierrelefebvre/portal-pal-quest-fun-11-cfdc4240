@@ -20,40 +20,41 @@ const Profile = () => {
   const totalBadges = badges.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-secondary p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-100 via-blue-50 to-purple-100 p-4">
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="text-center mb-6 pt-6">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+          <div className="text-6xl mb-4">👤✨</div>
+          <h1 className="text-3xl font-bold text-purple-800 mb-2">
             Mon Profil
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-purple-600">
             Explorateur de portails magiques
           </p>
         </div>
 
         {/* Stats Card */}
-        <Card className="mb-6 bg-card/95 backdrop-blur-sm shadow-lg border border-border">
+        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg border-2 border-purple-200">
           <CardHeader>
-            <CardTitle className="text-center text-foreground">
-              Mes Statistiques
+            <CardTitle className="text-center text-purple-800">
+              🏆 Mes Statistiques
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4 text-center">
-              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="bg-green-100 p-4 rounded-lg border-2 border-green-300">
                 <div className="text-3xl font-bold text-green-800">
                   {unlockedBadges.length}
                 </div>
-                <p className="text-green-600 font-medium">
+                <p className="text-green-600 font-semibold">
                   Portails Trouvés
                 </p>
               </div>
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="bg-blue-100 p-4 rounded-lg border-2 border-blue-300">
                 <div className="text-3xl font-bold text-blue-800">
                   {Math.round((unlockedBadges.length / totalBadges) * 100)}%
                 </div>
-                <p className="text-blue-600 font-medium">
+                <p className="text-blue-600 font-semibold">
                   Progression
                 </p>
               </div>
@@ -62,28 +63,28 @@ const Profile = () => {
         </Card>
 
         {/* Progress Bar */}
-        <Card className="mb-6 bg-card/95 backdrop-blur-sm shadow-lg border border-border">
+        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg">
           <CardContent className="p-6">
-            <h3 className="text-lg font-bold text-foreground mb-4 text-center">
-              Progression Globale
+            <h3 className="text-lg font-bold text-purple-800 mb-4 text-center">
+              🎯 Progression Globale
             </h3>
-            <div className="w-full bg-muted rounded-full h-4 mb-4">
+            <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
               <div 
-                className="bg-gradient-to-r from-primary to-primary/80 h-4 rounded-full transition-all duration-500"
+                className="bg-gradient-to-r from-green-500 to-blue-500 h-4 rounded-full transition-all duration-500"
                 style={{ width: `${(unlockedBadges.length / totalBadges) * 100}%` }}
               ></div>
             </div>
-            <p className="text-center text-muted-foreground">
+            <p className="text-center text-purple-600">
               {unlockedBadges.length} / {totalBadges} portails découverts
             </p>
           </CardContent>
         </Card>
 
         {/* Badges Collection */}
-        <Card className="mb-6 bg-card/95 backdrop-blur-sm shadow-lg border border-border">
+        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg">
           <CardHeader>
-            <CardTitle className="text-center text-foreground">
-              Ma Collection de Badges
+            <CardTitle className="text-center text-purple-800">
+              🏅 Ma Collection de Badges
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -91,29 +92,29 @@ const Profile = () => {
               {badges.map((badge) => (
                 <div
                   key={badge.id}
-                  className={`flex items-center p-4 rounded-lg border transition-all duration-200 ${
+                  className={`flex items-center p-4 rounded-lg border-2 transition-all duration-200 ${
                     badge.unlocked
-                      ? 'bg-accent border-border shadow-md'
-                      : 'bg-muted border-border opacity-60'
+                      ? 'bg-gradient-to-r from-yellow-100 to-orange-100 border-yellow-300 shadow-md'
+                      : 'bg-gray-100 border-gray-300 opacity-60'
                   }`}
                 >
-                  <div className={`text-4xl mr-4 ${badge.unlocked ? '' : 'grayscale'}`}>
+                  <div className={`text-4xl mr-4 ${badge.unlocked ? 'animate-pulse' : 'grayscale'}`}>
                     {badge.emoji}
                   </div>
                   <div className="flex-1">
-                    <h4 className={`font-medium ${badge.unlocked ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    <h4 className={`font-bold ${badge.unlocked ? 'text-orange-800' : 'text-gray-600'}`}>
                       {badge.name}
                     </h4>
-                    <p className={`text-sm ${badge.unlocked ? 'text-muted-foreground' : 'text-muted-foreground/70'}`}>
+                    <p className={`text-sm ${badge.unlocked ? 'text-orange-600' : 'text-gray-500'}`}>
                       {badge.description}
                     </p>
                   </div>
                   {badge.unlocked ? (
-                    <Badge className="bg-green-100 text-green-800 font-medium">
+                    <Badge className="bg-green-200 text-green-800 font-bold">
                       ✓ Débloqué
                     </Badge>
                   ) : (
-                    <Badge className="bg-muted text-muted-foreground">
+                    <Badge className="bg-gray-200 text-gray-600">
                       🔒 Verrouillé
                     </Badge>
                   )}
@@ -124,18 +125,18 @@ const Profile = () => {
         </Card>
 
         {/* Achievements */}
-        <Card className="mb-6 bg-card/95 backdrop-blur-sm shadow-lg border border-border">
+        <Card className="mb-6 bg-white/90 backdrop-blur-sm shadow-lg">
           <CardContent className="p-6">
-            <h3 className="text-lg font-bold text-foreground mb-4 text-center">
-              Prochains Objectifs
+            <h3 className="text-lg font-bold text-purple-800 mb-4 text-center">
+              🌟 Prochains Objectifs
             </h3>
             <div className="space-y-3">
-              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                <p className="text-blue-800 font-medium">🎯 Trouve 3 portails</p>
+              <div className="bg-blue-100 p-3 rounded-lg border-2 border-blue-300">
+                <p className="text-blue-800 font-bold">🎯 Trouve 3 portails</p>
                 <p className="text-blue-600 text-sm">Récompense : Badge Explorateur</p>
               </div>
-              <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                <p className="text-purple-800 font-medium">🏆 Trouve tous les portails</p>
+              <div className="bg-purple-100 p-3 rounded-lg border-2 border-purple-300">
+                <p className="text-purple-800 font-bold">🏆 Trouve tous les portails</p>
                 <p className="text-purple-600 text-sm">Récompense : Badge Maître des Portails</p>
               </div>
             </div>
@@ -147,19 +148,23 @@ const Profile = () => {
           <Button
             onClick={() => navigate('/')}
             variant="outline"
-            className="bg-card/80 backdrop-blur-sm border-border hover:bg-accent text-foreground font-medium py-3 rounded-lg"
+            className="bg-white/80 backdrop-blur-sm border-2 border-gray-300 hover:bg-gray-50 font-bold py-3 rounded-2xl"
           >
-            Accueil
+            🏠 Accueil
           </Button>
           
           <Button
             onClick={() => navigate('/mission')}
             variant="outline"
-            className="bg-card/80 backdrop-blur-sm border-border hover:bg-accent text-foreground font-medium py-3 rounded-lg"
+            className="bg-white/80 backdrop-blur-sm border-2 border-purple-300 hover:bg-purple-50 text-purple-700 font-bold py-3 rounded-2xl"
           >
-            Continuer
+            🎯 Continuer
           </Button>
         </div>
+
+        {/* Decorative elements */}
+        <div className="fixed top-8 right-8 text-3xl animate-spin">🏆</div>
+        <div className="fixed bottom-32 right-6 text-2xl animate-bounce">⭐</div>
       </div>
     </div>
   );
